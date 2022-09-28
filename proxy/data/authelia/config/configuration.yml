@@ -1,0 +1,111 @@
+###############################################################
+#                   Authelia configuration                    #
+###############################################################
+
+server.host: 0.0.0.0
+server.port: 9091
+log.level: debug
+# log:
+#   level: debug
+#   format: text
+#   file_path: "/logs/Authelia.log"
+#   keep_stdout: false
+theme: dark
+# This secret can also be set using the env variables AUTHELIA_JWT_SECRET_FILE
+jwt_secret: ---->PUT HERE A SECRET WICH IS 64 CHARACTERS LONG<----
+default_redirection_url: https://auth.---->PUT YOUR DOMAIN HERE<----
+totp:
+  issuer: authelia.com
+
+ntp:
+  address: "time.cloudflare.com:123"
+  version: 4
+  max_desync: 3s
+  disable_startup_check: false
+  disable_failure: false
+
+# duo_api:
+#  hostname: api-123456789.---->PUT YOUR DOMAIN HERE<----
+#  integration_key: ABCDEF
+#  # This secret can also be set using the env variables AUTHELIA_DUO_API_SECRET_KEY_FILE
+#  secret_key: 1234567890abcdefghifjkl
+
+authentication_backend:
+  file:
+    path: /config/users_database.yml
+    password:
+      algorithm: argon2id
+      iterations: 1
+      salt_length: 16
+      parallelism: 8
+      memory: 64
+      
+access_control:
+  default_policy: two_factor
+  networks:
+  - name: internal
+    networks:
+      - '10.0.0.0/8'
+      - '172.16.0.0/12'
+      - '192.168.0.0/18'
+      - '192.168.179.0/24'
+      - '172.0.0.1'
+  rules:
+    - domain:     # Rules applied to everyone 
+      - "proxy.---->PUT YOUR DOMAIN HERE<----"
+      - "sec.---->PUT YOUR DOMAIN HERE<----"
+      policy: two_factor
+      subject:
+      - "group:admin"
+
+    - domain: 
+        - "whoami.---->PUT YOUR DOMAIN HERE<----"
+      policy: bypass
+
+    - domain: 
+        - "---->PUT YOUR DOMAIN HERE<----"
+        - "www.---->PUT YOUR DOMAIN HERE<----"
+      policy: one_factor
+      subject:
+      - "group:admin"
+      - "group:user"
+
+session:
+  name: authelia_session
+  # This secret can also be set using the env variables AUTHELIA_SESSION_SECRET_FILE
+  secret: ---->PUT HERE A SECRET WICH IS 128 CHARACTERS LONG<----
+  expiration: 3600  # 1 hour
+  #inactivity: 3600  # 1 hour
+  remember_me_duration: 604800  # 7 days
+  domain: ---->PUT YOUR DOMAIN HERE<----  # Should match whatever your root protected domain is
+
+regulation:
+  max_retries: 3
+  find_time: 120
+  ban_time: 300
+
+storage:
+  encryption_key: '---->PUT HERE A SECRET WICH IS 128 CHARACTERS LONG<----'
+  local:
+    path: /config/db.sqlite3
+
+notifier:
+   filesystem:
+     filename: /config/notification.txt
+#  disable_startup_check: true
+#  smtp:
+#    host: ---->PUT MAIL SERVER HERE<----
+#    port: 465 #you maybe have to change this port
+#    timeout: 60s
+#    username: ---->PUT YOUR MAIL HERE<----
+#    password: '---->PUT YOUR MAIL PASSWORT HERE<----'
+#    sender: ---->PUT YOUR MAIL HERE<----
+#    identifier: ---->PUT MAIL SERVER HERE<----
+#    subject: "[Authelia] {title}"
+#    startup_check_address: ---->PUT YOUR MAIL HERE<----
+#    disable_require_tls: false
+#    disable_html_emails: false
+#    tls:
+#      server_name: ---->PUT MAIL SERVER HERE<----
+#      skip_verify: false
+#      minimum_version: TLS1.2

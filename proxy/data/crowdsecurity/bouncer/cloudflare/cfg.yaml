@@ -1,0 +1,32 @@
+# CrowdSec Config
+crowdsec_lapi_url: http://proxy-crowdsec:8080/
+crowdsec_lapi_key: 'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx'  #docker exec proxy-crowdsec cscli -oraw bouncers add cloudflarebouncer
+crowdsec_update_frequency: 10s
+
+#Cloudflare Config. 
+cloudflare_config:
+  accounts:
+  - id: 'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx'
+    token: 'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx'
+    ip_list_prefix: crowdsec    
+    default_action: block    # valid choices are either of challenge, js_challenge, block
+    zones:    
+    - actions:       
+      - block # valid choices are either of challenge, js_challenge, block      
+      zone_id: xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+
+  update_frequency: 30s # the frequency to update the cloudflare IP list 
+
+
+# Bouncer 
+Configdaemon: true
+log_mode: file
+log_dir: /var/log/ 
+log_level: info # valid choices are either debug, info, error 
+cache_path: /var/lib/crowdsec/crowdsec-cloudflare-bouncer/cache/cloudflare-cache.json
+
+
+prometheus:  
+  enabled: false  
+  # listen_addr: 127.0.0.1  
+  # listen_port: 2112

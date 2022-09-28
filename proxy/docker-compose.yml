@@ -1,0 +1,299 @@
+version: "3.3"
+
+services:
+  ###############################################
+  ####               Traefik                #####
+  ###############################################
+  # This container is a reverse proxy. All the traffic will be routed through this container before it gets to the real container.
+  proxy-traefik:
+    image: traefik:latest
+    restart: unless-stopped
+    container_name: proxy-traefik
+    ports:
+      - "80:80"   # <== http
+      - "443:443" # <== https
+
+      # #DNS Pihole
+      # - "853:853"       #<== TCP DNS over TLS
+      # - "853:853/udp"   #<== UDP DNS over TLS: Traefik does not support it yet
+      # #- "53:53"        #<== TCP DNS (dont use it on a public server, if you dont have protection against misuse )
+      # #- "53:53/udp"    #<== TCP DNS (dont use it on a public server, if you dont have protection against misuse )
+
+      # #Mail
+      # - "25:25"      #<== smtp
+      # - "465:465"    #<== smtp with ssl
+      # - "587:587"    #<== default smtp with TLS
+      # #- "110:110"   #<== POP3
+      # - "995:995"    #<== POP3s
+      # #- "143:143"   #<== IMAP
+      # - "993:993"    #<== IMAPs
+      # #- "2525:2525" #<== smtp with TLS
+    command:
+      #### These are the CLI commands that will configure Traefik and tell it how to work! ####
+      - --pilot.token=${Traefik_Pilot_Token}        #<== Traefik Token (not necessary). (You can register your instance here: https://pilot.traefik.io/instances)
+      #- --api.insecure=true                        #<== Enabling insecure api, NOT RECOMMENDED FOR PRODUCTION
+      - --api.dashboard=true                        #<== Enabling the dashboard to view services, middlewares, routers, etc...
+      #- --api.debug=true                           #<== Enabling additional endpoints for debugging and profiling
+
+      - --log.level=WARN                                  #<== Log Settings (options: ERROR, DEBUG, PANIC, FATAL, WARN, INFO) (https://docs.traefik.io/observability/logs/)
+      - --log.filePath=/var/log/traefik/traefik.log       #<== Log Path
+      - --accesslog=true                                  #enable access logs
+      - --accesslog.filepath=/var/log/traefik/access.log  #<== Acces Log Path
+
+      - --providers.docker=true                     #<== Enabling docker as the provider for traefik (https://docs.traefik.io/providers/docker/#provider-configuration)
+      - --providers.docker.exposedbydefault=false   #<== Don't expose every container to traefik, only expose enabled ones
+      #- --providers.file.filename=/dynamic.yaml    #<== Referring to a dynamic configuration file
+      - --providers.docker.network=proxy            #<== Operate on the docker network named proxy
+
+      #### Certificate Settings (Let's Encrypt) (https://docs.traefik.io/https/acme/#configuration-examples) ####
+      #- --certificatesresolvers.mytlschallenge.acme.tlschallenge=true               #<== Enable TLS-ALPN-01 to generate and renew ACME certs
+      ##- --certificatesresolvers.mytlschallenge.acme.email=${Email}                 #<== Setting email for certs
+      #- --certificatesresolvers.mytlschallenge.acme.storage=/letsencrypt/acme.json  #<== Defining acme file to store cert information
+      # OR use Cloudflair
+      - --certificatesresolvers.mytlschallenge.acme.dnschallenge=true
+      - --certificatesresolvers.mytlschallenge.acme.dnschallenge.provider=cloudflare
+      #- --certificatesresolvers.mytlschallenge.acme.email=${Email}
+      - --certificatesresolvers.mytlschallenge.acme.storage=/letsencrypt/acme.json
+
+
+
+      #### Entrypoints Settings (https://docs.traefik.io/routing/entrypoints/#configuration) ####
+      #http
+      - --entrypoints.web.address=:80                                 #<== Defining an entrypoint for http on port :80 named web
+      #- --entrypoints.web.http.middlewares=crowdsec-bouncer-traefik
+      - --entrypoints.web.http.redirections.entryPoint.to=websecure   #<==\
+      - --entrypoints.web.http.redirections.entryPoint.scheme=https   #<====== Redirect all http to https
+      - --entrypoints.web.http.redirections.entrypoint.permanent=true #<==/
+      #https
+      - --entrypoints.websecure.address=:443                              #<== Defining an entrypoint for https on port :443 named websecure
+      - --entrypoints.websecure.http.middlewares=crowdsec-bouncer-traefik #<== Add Crowdsec all middleware
+
+
+      # #Pihole DNS
+      # - "--entrypoints.dns-tls.address=:853"
+      # - "--entrypoints.dns-tls-udp.address=:853/udp"
+      # #- "--entrypoints.dns.address=:53"
+      # #- "--entrypoints.dns-udp.address=:53/udp"
+
+
+      # #Mail (mailu cares about the SSL certificate. Dont use websecure! Have a look on "mailu-certdumper")
+      # - "--entrypoints.smtp-465.address=:465"    #<== smtp with ssl
+      # - "--entrypoints.smtp-587.address=:587"    #<== default smtp with TLS
+      # #- "--entrypoints.smtp-2525.address=:2525" #<== smtp with TLS
+      # - "--entrypoints.smtp-25.address=:25"      #<== smtp
+      # #- "--entrypoints.pop-110.address=:110"    #<== POP3
+      # - "--entrypoints.pop-995.address=:995"     #<== POP3
+      # #- "--entrypoints.imap-143.address=:143"   #<== IMAP
+      # - "--entrypoints.imap-993.address=:993"    #<== IMAP
+    environment:
+      - CLOUDFLARE_EMAIL=${Cloudflare_Email}      #Email from Cloudflair
+      - CLOUDFLARE_API_KEY=${Cloudflar_API_Key}   #Global API Key: https://dash.cloudflare.com/profile/api-tokens
+    volumes:
+      - ./data/traefik/letsencrypt:/letsencrypt        #<== Volume for certs (SSL/TLS)
+      - /var/run/docker.sock:/var/run/docker.sock:ro   #<== Volume for docker admin
+      - /var/log/traefik/:/var/log/traefik/            #<== Traefik Logs (for crowdsec)
+      #- ./data/traefik/dynamic.yaml:/dynamic.yaml #<== Volume for dynamic conf file. This file must exist! , **ref: "--providers.file.filename=/dynamic.yaml"
+    networks:
+      - proxy # <== Placing traefik on the network named web, to access containers on this network
+      - proxy-backend
+    labels:
+    #### Labels define the behavior and rules of the traefik proxy for this container ####
+      - "traefik.enable=true"                                                    #<== Enable traefik on itself to view dashboard and assign subdomain to view it, **ref: "--providers.docker.exposedbydefault=false"
+      - "traefik.http.routers.traefik-secured.rule=Host(`proxy.${DOMAIN}`)"      #<== Set domain
+      - "traefik.http.routers.traefik-secured.entrypoints=websecure"             #<== Set entrypoint for https, **ref: "--entrypoints.websecure.address=:443"
+      - "traefik.http.routers.traefik-secured.tls.certresolver=mytlschallenge"   #<== Set certsresolvers for https, **ref: "--certificatesresolvers.mytlschallenge.acme.tlschallenge=true"
+      - "traefik.http.routers.traefik-secured.service=api@internal"              #<== Enabling the api to be a service to access
+      - "traefik.http.routers.traefik-secured.middlewares=authelia"              #<== Add Authelia middlewares to protect login
+      #- "traefik.http.middlewares.traefik-auth.basicauth.users=${Traefik_Auth}" #<== Define Authentication as "traefik-auth": Generate HASH value: "echo $(htpasswd -nb USER PASSWORT) | sed -e s/\\$/\\$\\$/g"
+      #- "traefik.http.routers.traefik-secured.middlewares=traefik-auth"         #<== Add Authentication to traefik-secured
+
+      # This is for Crowdsec. I dont know why it has to be here and not at the crowdsec bouncer container
+      - traefik.http.middlewares.crowdsec-bouncer-traefik.forwardauth.address=http://proxy-bouncer-traefik:8080/api/v1/forwardAuth  #<== Define forwardauth. Traefik will ask this address(crowdsec) if the user is authenticated.
+      - traefik.http.middlewares.crowdsec-bouncer-traefik.forwardauth.trustforwardheader=true                                       #<== Trust crowdsec header
+
+
+  ##############################################################
+  #### Cloudflare-Companion - Automatic CNAME DNS Creation #####
+  ##############################################################
+  # This container automaticly looks for traefik labels and based on those it adds dns entrys in cloudflare.
+  proxy-cf-companion:
+    container_name: proxy-cf-companion
+    image: tiredofit/traefik-cloudflare-companion:latest
+    restart: unless-stopped
+    networks:
+      - proxy-backend
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    environment:
+      - TIMEZONE=${TimeZone}
+      - TRAEFIK_VERSION=2                     #<== Set trafik version
+      - CF_EMAIL=${Cloudflare_Email}          #<== cloudflare email. Same as the one set in the traefik environment variables
+      - CF_TOKEN=${Cloudflar_API_Key}         #<== cloudflare global api key. Same as the one set in the traefik environment variables
+      - TARGET_DOMAIN=${DOMAIN}               #<== Main domain. Has to be regestered in cloudflare
+      - DOMAIN1=${DOMAIN}
+      - DOMAIN1_ZONE_ID=${Cloudflar_Zonen_ID} #<== Cloudflar zonen ID. Copy from Cloudflare Overview page
+      - DOMAIN1_PROXIED=FALSE                 #<== Set to TRUE if you want to to proxy traffic through cloudflare (more secure)
+
+
+
+
+
+  ###############################################
+  ####              Authelia                #####
+  ###############################################
+  # To protect your websides with a SSO (Single Sign-on). (Nice login before entering the webside)
+  proxy-authelia:
+    image: authelia/authelia:latest
+    container_name: proxy-authelia
+    depends_on:
+      - proxy-traefik
+    volumes:
+      - ./data/authelia/config:/config
+    networks:
+      - proxy-backend
+    labels:
+      - 'traefik.enable=true'                                                     #<== Enable traefik **ref: "--providers.docker.exposedbydefault=false"
+      - 'traefik.docker.network=proxy-backend'                                    #<== Overwrite default network "proxy" to proxy-backend
+      - 'traefik.http.routers.authelia.rule=Host(`auth.${DOMAIN}`)'               #<== Set domain
+      - 'traefik.http.routers.authelia.entrypoints=websecure'                     #<== Set entrypoint for https, **ref: "--entrypoints.websecure.address=:443"
+      - "traefik.http.routers.authelia.tls.certresolver=mytlschallenge"           #<== Set certsresolvers for https, **ref: "--certificatesresolvers.mytlschallenge.acme.tlschallenge=true"
+      - 'traefik.http.routers.authelia.tls=true'                                  #<== Set tls to true to use https
+      - 'traefik.http.middlewares.authelia.forwardauth.address=http://proxy-authelia:9091/api/verify?rd=https://auth.${DOMAIN}' #<== Define forwardauth. Traefik will ask this address(authelia) if the user is authenticated.
+      - 'traefik.http.middlewares.authelia.forwardauth.trustForwardHeader=true'                                                 #<== Trust authelia header
+      - 'traefik.http.middlewares.authelia.forwardauth.authResponseHeaders=Remote-User,Remote-Groups,Remote-Name,Remote-Email'
+    expose:
+      - 9091
+    restart: unless-stopped
+    environment:
+      - TZ=${TimeZone}
+    healthcheck:
+      disable: true
+
+
+
+
+  ###############################################
+  ####              Crowdsec                #####
+  ###############################################
+  # Crowdsec will analyse logs from your containers and decids to ban an ip address if there is some melissios behavior.
+  proxy-crowdsec:
+    image: crowdsecurity/crowdsec
+    container_name: proxy-crowdsec
+    restart: unless-stopped
+    environment:
+      GID: "${GID-1000}"
+      COLLECTIONS: "crowdsecurity/linux crowdsecurity/linux-lpe crowdsecurity/traefik LePresidente/authelia crowdsecurity/sshd crowdsecurity/mysql crowdsecurity/base-http-scenarios crowdsecurity/http-cve" #<== define collection to analyse the logs of those containers
+    depends_on:
+      - 'proxy-traefik'
+      - 'proxy-authelia'
+    ports:
+      - 127.0.0.1:8080:8080 #<== Open a port only on localhost on your server to communcate with the firewall bouncer
+    volumes:
+      - ./data/crowdsecurity/cs/acquis.yaml:/etc/crowdsec/acquis.yaml #<== File to define where to find the logs of the containers to analyse. This file must exist. Outherwise docker will create a folder. At the beginning the file can be empty.
+      - ./data/crowdsecurity/cs/db:/var/lib/crowdsec/data/            #<== Database
+      - ./data/crowdsecurity/cs/config:/etc/crowdsec/                 #<== Crowdsec configuration
+      - /var/run/docker.sock:/var/run/docker.sock:ro                  #<== Some logs of the containers can be read through docker
+      - /var/log/:/var/log/:ro                                        #<== System logs and many more
+    networks:
+      - proxy-backend
+
+  # This is a web dashboard for crowdsec
+  # default login for metabase:
+  #     mail:       crowdsec@crowdsec.net
+  #     password:   !!Cr0wdS3c_M3t4b4s3??
+  proxy-crowdsec-dashboard:
+    image: metabase/metabase
+    container_name: proxy-crowdsec-dashboard
+    restart: unless-stopped
+    #ports:
+    #  - 3000:3000
+    environment:
+      MB_DB_FILE: /data/metabase.db
+      MGID: "${GID-1000}"
+    depends_on:
+      - 'proxy-crowdsec'
+    volumes:
+      - ./data/crowdsecurity/cs/db:/metabase-data/
+      - ./data/crowdsecurity/metabase:/data/
+    networks:
+      - proxy
+    labels:
+      - "traefik.enable=true"                                                                 #<== Enable traefik **ref: "--providers.docker.exposedbydefault=false"
+      - "traefik.http.routers.crowdsec-dashboard-secured.rule=Host(`sec.${DOMAIN}`)"          #<== Set domain
+      - "traefik.http.routers.crowdsec-dashboard-secured.entrypoints=websecure"               #<== Set entrypoint for https, **ref: "--entrypoints.websecure.address=:443"
+      - "traefik.http.routers.crowdsec-dashboard-secured.tls.certresolver=mytlschallenge"     #<== Set certsresolvers for https, **ref: "--certificatesresolvers.mytlschallenge.acme.tlschallenge=true"
+      - "traefik.http.routers.crowdsec-dashboard-secured.middlewares=authelia"                #<== Add Authelia middlewares to protect login
+      - "traefik.http.routers.crowdsec-dashboard-secured.service=crowdsec-dashboard-service"  #<== Set service
+      - "traefik.http.services.crowdsec-dashboard-service.loadbalancer.server.port=3000"      #<== Set target port on container
+
+  # This is the bouncer with wich traefik and crowdsec are communicating. It works simular to authelia. Before someone exisses a webside traefik has to ask the bounce if the user is authenticated.
+  proxy-bouncer-traefik:
+    image: docker.io/fbonalair/traefik-crowdsec-bouncer:latest
+    container_name: proxy-bouncer-traefik
+    restart: unless-stopped
+    environment:
+      CROWDSEC_BOUNCER_API_KEY: ${Crowdsec_Bouncer_Traefik_API} #<== This bouncer has to be registered at the proxy-crowdsec container. To do that execute: docker exec proxy-crowdsec cscli bouncers add bouncer-traefik
+      CROWDSEC_AGENT_HOST: proxy-crowdsec:8080                  #<== Address to the proxy-crowdsec container
+      GIN_MODE: release
+    networks:
+      - proxy-backend #<== same network as traefik + crowdsec
+    depends_on:
+      - proxy-crowdsec
+
+  # This is the bouncer with wich cloudflare and crowdsec are communicating.
+  proxy-bouncer-cloudflare:
+    image: crowdsecurity/cloudflare-bouncer:latest
+    container_name: proxy-bouncer-cloudflare
+    restart: unless-stopped
+    networks:
+      - proxy-backend #<== same network as crowdsec
+    depends_on:
+      - proxy-crowdsec
+    volumes:
+      - ./data/crowdsecurity/bouncer/cloudflare/cfg.yaml:/etc/crowdsec/bouncers/crowdsec-cloudflare-bouncer.yaml                                #<== This is the config for the cloudflare bouncer. This file must exist. Outherwise docker will create a folder.
+      - ./data/crowdsecurity/bouncer/cloudflare/cloudflare-cache.json:/var/lib/crowdsec/crowdsec-cloudflare-bouncer/cache/cloudflare-cache.json #<== This file must exist. Outherwise docker will create a folder. At the beginning the file has to be empty.
+
+
+
+  ###############################################
+  ####               Whoami                 #####
+  ###############################################
+  # Example container to test functanality
+  whoami:     # A container that exposes an API to show its IP address
+    image: traefik/whoami
+    container_name: whoami
+    restart: unless-stopped
+    networks:
+      - proxy
+    # ports:
+      # - "1000:80"
+    labels:
+      - "traefik.enable=true"                                                 #<== Enable traefik **ref: "--providers.docker.exposedbydefault=false"
+      - "traefik.http.routers.whoami-secured.rule=HOST(`whoami.${DOMAIN}`)"   #<== Set domain
+      - "traefik.http.routers.whoami-secured.entrypoints=websecure"           #<== Set entrypoint for https, **ref: "--entrypoints.websecure.address=:443"
+      - "traefik.http.routers.whoami-secured.tls.certresolver=mytlschallenge" #<== Set certsresolvers for https, **ref: "--certificatesresolvers.mytlschallenge.acme.tlschallenge=true"
+      - "traefik.http.routers.whoami-secured.middlewares=authelia"            #<== Add Authelia middlewares to protect login
+      - "traefik.http.routers.whoami-secured.service=whoami-service"          #<== Set service
+      - "traefik.http.services.whoami-service.loadbalancer.server.port=80"    #<== Set target port on container
+
+networks:
+  proxy:
+    name: proxy
+    driver: bridge
+    enable_ipv6: true
+    ipam:
+      driver: default
+      config:
+        - subnet: 172.0.0.0/16
+          gateway: 172.0.0.1
+        - subnet: fd00:0:0:0::/64
+          gateway: fd00:0:0:0::1
+
+  proxy-backend:
+    name: proxy-backend
+    driver: bridge
+    ipam:
+      driver: default
+      config:
+        - subnet: 172.1.0.0/16
+          gateway: 172.1.0.1

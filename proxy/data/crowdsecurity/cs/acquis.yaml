@@ -1,0 +1,43 @@
+#Generated acquisition file - wizard.sh (service: sshd) / files : /var/log/auth.log
+filenames:
+  - /var/log/auth.log
+labels:
+  type: syslog
+---
+
+---
+#Generated acquisition file - wizard.sh (service: mysql) / files : /var/log/mysql/error.log
+filenames:
+  - /var/log/mysql/error.log
+labels:
+  type: mysql
+---
+
+---
+#Generated acquisition file - wizard.sh (service: linux) / files : /var/log/syslog /var/log/kern.log /var/log/messages
+filenames:
+  - /var/log/syslog
+  - /var/log/kern.log
+  - /var/log/messages
+labels:
+  type: syslog
+---
+
+---
+filenames:
+  - /var/log/traefik/*
+labels:
+  type: traefik
+
+# source: docker
+# container_name:
+#   - proxy-traefik
+# labels:
+#   type: traefik
+
+---
+source: docker
+container_name:
+  - proxy-authelia
+labels:
+  type: authelia

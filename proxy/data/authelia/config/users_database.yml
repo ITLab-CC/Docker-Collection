@@ -1,0 +1,9 @@
+#docker run authelia/authelia:latest authelia hash-password -- 'password'
+users:
+    user@example.com:
+        password: $argon2id$v=19$m=65536,t=3,p=4$R2dqcnNrOFJMN2F4UElDZw$3wLhazMUu39DaT44gVlc3d/0PPZABwQFXN4ecU/ucM4
+        displayname: "test user"
+        email: user@example.com
+        groups:
+            - admin
+            - dev
