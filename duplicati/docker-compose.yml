@@ -1,0 +1,33 @@
+version: "3.3"
+
+services:
+  ###############################################
+  ####               Duplicati              #####
+  ###############################################
+  duplicati:
+    image: duplicati/duplicati
+    container_name: duplicati
+    restart: unless-stopped
+    environment:
+      - PUID=0
+      - PGID=0
+      - TZ=${TimeZone}
+    volumes:
+      - ./data/config:/config
+      - ../:/source
+    # ports:
+    #   - 8200:8200
+    networks:
+      - proxy
+    labels:
+      - "traefik.enable=true"                                                    #<== Enable traefik
+      - "traefik.http.routers.duplicati-secured.rule=HOST(`backup.${DOMAIN}`)"   #<== Set domain
+      - "traefik.http.routers.duplicati-secured.entrypoints=websecure"           #<== Set entry point for HTTPS
+      - "traefik.http.routers.duplicati-secured.tls.certresolver=mytlschallenge" #<== Set certsresolvers for https
+      - "traefik.http.routers.duplicati-secured.middlewares=authelia"            #<== Add Authelia middlewares to protect login
+      - "traefik.http.routers.duplicati-secured.service=duplicati-service"       #<== Set service
+      - "traefik.http.services.duplicati-service.loadbalancer.server.port=8200"    #<== Set target port on container
+
+networks:
+  proxy:
+    external: true
