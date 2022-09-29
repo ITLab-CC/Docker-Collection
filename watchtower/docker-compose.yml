@@ -1,0 +1,27 @@
+version: "3.3"
+
+services:
+  ###############################################
+  ####             Watchtower               #####
+  ###############################################
+  watchtower:
+    image: containrrr/watchtower:latest
+    container_name: watchtower
+    restart: unless-stopped
+    command: --interval 86400 #Ckeck every day: 24*60*60=86400s
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    environment:
+      - TZ=${TimeZone}
+      # - WATCHTOWER_DEBUG=true
+      # - WATCHTOWER_TRACE=true
+      - WATCHTOWER_CLEANUP=true
+    dns:
+      - 1.1.1.1
+      - 8.8.8.8
+    networks:
+      - proxy
+
+networks:
+  proxy:
+    external: true
