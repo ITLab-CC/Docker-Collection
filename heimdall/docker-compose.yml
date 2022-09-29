@@ -1,0 +1,30 @@
+version: "3.3"
+
+services:
+  ###############################################
+  ####              heimdall                 #####
+  ###############################################
+  heimdall:
+    image: lscr.io/linuxserver/heimdall
+    container_name: heimdall
+    restart: unless-stopped
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=${TimeZone}
+    volumes:
+      - ./data/heimdall:/config
+    networks:
+      - proxy
+    labels:
+      - "traefik.enable=true"                                                                     #<== Enable traefik
+      - "traefik.http.routers.heimdall-secured.rule=HOST(`${DOMAIN}`)  || Host(`www.${DOMAIN}`)"  #<== Set domain
+      - "traefik.http.routers.heimdall-secured.entrypoints=websecure"                             #<== Set entry point for HTTPS
+      - "traefik.http.routers.heimdall-secured.tls.certresolver=mytlschallenge"                   #<== Set certsresolvers for https
+      - "traefik.http.routers.heimdall-secured.middlewares=authelia"                              #<== Add Authelia middlewares to protect login
+      - "traefik.http.routers.heimdall-secured.service=heimdall-service"                          #<== Set service
+      - "traefik.http.services.heimdall-service.loadbalancer.server.port=80"                      #<== Set target port on container
+
+networks:
+  proxy:
+    external: true
