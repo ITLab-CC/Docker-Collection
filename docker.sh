@@ -175,7 +175,11 @@ CreateStack()
     else
         mkdir $STACKNAME
         mkdir $STACKNAME/data
-        touch $STACKNAME/docker-compose.yml
+        if [ -f "docker-compose.dflt.yml" ]; then
+            cp docker-compose.dflt.yml $STACKNAME/docker-compose.yml
+        else
+            touch $STACKNAME/docker-compose.yml
+        fi
         cp global.env $STACKNAME/.env
         echo -e ".env\ndata" >> $STACKNAME/.gitignore
         echo -e "# $STACKNAME" >> $STACKNAME/README.md
