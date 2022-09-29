@@ -1,0 +1,35 @@
+version: "3.3"
+
+services:
+  ###############################################
+  ####               GitLab                 #####
+  ###############################################
+  gitlab:
+    image: gitlab/gitlab-ce:latest
+    container_name: gitlab
+    restart: unless-stopped
+    #ports:
+      #- '6000:80'
+      #- '443:443'
+      #- '22:22'
+    environment:
+      GITLAB_OMNIBUS_CONFIG: |
+        external_url 'https://git.${DOMAIN}'
+    volumes:
+      - './data/config:/etc/gitlab'
+      - './data/logs:/var/log/gitlab'
+      - './data/data:/var/opt/gitlab'
+    networks:
+      - proxy
+    labels:
+      - "traefik.enable=true"                                                 #<== Enable traefik
+      - "traefik.http.routers.gitlab-secured.rule=HOST(`git.${DOMAIN}`)"      #<== Set domain
+      - "traefik.http.routers.gitlab-secured.entrypoints=websecure"           #<== Set entry point for HTTPS
+      - "traefik.http.routers.gitlab-secured.tls.certresolver=mytlschallenge" #<== Set certsresolvers for https
+      - "traefik.http.routers.gitlab-secured.middlewares=authelia"            #<== Add Authelia middlewares to protect login
+      - "traefik.http.routers.gitlab-secured.service=gitlab-service"          #<== Set service
+      - "traefik.http.services.gitlab-service.loadbalancer.server.port=80"    #<== Set target port on container
+
+networks:
+  proxy:
+    external: true
