@@ -1,0 +1,78 @@
+version: "3.3"
+
+services:
+  ###############################################
+  ####              hedgedoc                #####
+  ###############################################
+  hedgedoc-db:
+    image: lscr.io/linuxserver/mariadb:latest
+    container_name: hedgedoc-db
+    restart: unless-stopped
+    volumes:
+      - ./Data/db:/config
+    environment:
+      - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD}
+      - MYSQL_DATABASE=${MYSQL_DATABASE}
+      - MYSQL_USER=${MYSQL_USER}
+      - MYSQL_PASSWORD=${MYSQL_PASSWORD}
+      - PGID=1000
+      - PUID=1000
+      - TZ=${TimeZone}
+    networks:
+      - hedgedoc-backend
+
+  hedgedoc:
+    image: lscr.io/linuxserver/hedgedoc:latest
+    container_name: hedgedoc
+    restart: unless-stopped
+    depends_on:
+      - hedgedoc-db
+    volumes:
+      - ./Data/config:/config
+    environment:
+      - DB_HOST=hedgedoc-db
+      - DB_USER=${MYSQL_USER}
+      - DB_PASS=${MYSQL_PASSWORD}
+      - DB_NAME=${MYSQL_DATABASE}
+      - DB_PORT=3306
+      - PGID=1000
+      - PUID=1000
+      - TZ=${TimeZone}
+      - CMD_DOMAIN=docs.${DOMAIN}
+      - CMD_URL_ADDPORT=false
+      - CMD_PROTOCOL_USESSL=true
+      - CMD_ALLOW_PDF_EXPORT=true
+      #- "CMD_OPENID=true"
+      #Authelia as OIDC 
+      # - CMD_OAUTH2_CLIENT_ID=hedgedoc
+      # - CMD_OAUTH2_CLIENT_SECRET=XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+      # - CMD_OAUTH2_AUTHORIZATION_URL=https://auth.${DOMAIN}/api/oidc/authorization
+      # - CMD_OAUTH2_TOKEN_URL=https://auth.${DOMAIN}/api/oidc/token
+      # - CMD_OAUTH2_USER_PROFILE_URL=https://auth.${DOMAIN}/api/oidc/userinfo
+      # - CMD_OAUTH2_USER_PROFILE_USERNAME_ATTR=preferred_username
+      # - CMD_OAUTH2_USER_PROFILE_DISPLAY_NAME_ATTR=name
+      # - CMD_OAUTH2_USER_PROFILE_EMAIL_ATTR=email
+      # - "CMD_OAUTH2_SCOPE=openid profile groups email"
+    networks:
+      - hedgedoc-backend
+      - proxy
+    labels:
+      - "traefik.enable=true"                                                  #<== Enable traefik
+      - "traefik.http.routers.hedgedoc-secured.rule=HOST(`docs.${DOMAIN}`)"  #<== Set domain
+      - "traefik.http.routers.hedgedoc-secured.entrypoints=websecure"           #<== Set entry point for HTTPS
+      - "traefik.http.routers.hedgedoc-secured.tls.certresolver=mytlschallenge" #<== Set certsresolvers for https
+      - "traefik.http.routers.hedgedoc-secured.middlewares=authelia"            #<== Add Authelia middlewares to protect login
+      - "traefik.http.routers.hedgedoc-secured.service=hedgedoc-service"         #<== Set service
+      - "traefik.http.services.hedgedoc-service.loadbalancer.server.port=80"    #<== Set target port on container
+
+networks:
+  proxy:
+    external: true
+  hedgedoc-backend:
+    name: hedgedoc-backend
+    driver: bridge
+    ipam:
+      driver: default
+      config:
+        - subnet: 172.2.0.0/16
+          gateway: 172.2.0.1
