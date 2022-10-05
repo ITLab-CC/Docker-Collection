@@ -19,7 +19,7 @@ DOMAIN="example.com"
 mkdir minecraft/data/filebrowser
 touch minecraft/data/filebrowser/filebrowser.db
 docker-compose up -d
-sleep 50
+sleep 100
 docker-compose down
 sudo chown 1000:1000 minecraft/data -R
 cd minecraft/data/minecraft/proxy/plugins/
@@ -143,3 +143,15 @@ or use the shell script in the root directory of this repo
 ```
 
 Done. Now open https://mc-files.example.com and have fun playing on your minecraft server
+
+### One your mobile device:
+![](img/img1.png)
+![](img/img2.png)
+
+### One your pc:
+![](img/img3.png)
+![](img/img4.png)
+
+### Web interface for files
+![](img/img5.png)
+![](img/img6.png)
