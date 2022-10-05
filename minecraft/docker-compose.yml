@@ -1,0 +1,99 @@
+version: "3.3"
+
+services:
+  ###############################################
+  ####             Minecraft                #####
+  ###############################################
+  mc-proxy:
+    image: itzg/bungeecord:latest
+    container_name: mc-proxy
+    restart: unless-stopped
+    ports:
+      - "25565:25577"
+      - "19132:19132"
+      - "25565:25577/udp"
+      - "19132:19132/udp"
+    networks:
+      - mc-backend
+    volumes:
+      - "./data/minecraft/proxy:/server"
+    environment:
+      - TYPE=VELOCITY
+      - MEMORY=1G
+      - MAX_MEMORY=2G
+
+
+  mc1:
+    image: itzg/minecraft-server:java17
+    container_name: mc1
+    #ports:
+    #  - 25565:25565
+    #  - 25565:25565/udp
+    environment:
+      - EULA=TRUE
+      - VERSION=1.19.2
+      - TZ=Europe/Berlin
+      - MEMORY=5G
+    tty: true
+    stdin_open: true
+    restart: unless-stopped
+    volumes:
+      - ./data/minecraft/mc1:/data
+      - /etc/timezone:/etc/timezone:ro
+    networks:
+      - mc-backend
+
+  mc2:
+    image: itzg/minecraft-server:java17
+    container_name: mc2
+    #ports:
+    #  - 25565:25565
+    #  - 25565:25565/udp
+    environment:
+      - EULA=TRUE
+      - VERSION=1.19.2
+      - TZ=Europe/Berlin
+      - MEMORY=5G
+    tty: true
+    stdin_open: true
+    restart: unless-stopped
+    volumes:
+      - ./data/minecraft/mc2:/data
+      - /etc/timezone:/etc/timezone:ro
+    networks:
+      - mc-backend
+    
+
+  ###############################################
+  ####             Filebrowser              #####
+  ###############################################
+  filebrowser:
+    image: filebrowser/filebrowser:latest
+    container_name: mc-filebrowser
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    user: 1000:1000
+    command: "--noauth"
+    volumes:
+      - ./data/minecraft:/srv
+      - ./data/filebrowser/filebrowser.db:/database.db
+    networks:
+      - proxy
+    labels:
+      - "traefik.enable=true"                                                           #<== Enable traefik
+      - "traefik.http.routers.filebrowser-secured.rule=Host(`mc-files.${DOMAIN}`)"   #<== Set domain
+      - "traefik.http.routers.filebrowser-secured.entrypoints=websecure"                #<== Set entry point for HTTPS
+      - "traefik.http.routers.filebrowser-secured.tls.certresolver=mytlschallenge"      #<== Set certsresolvers for https
+      - "traefik.http.routers.filebrowser-secured.middlewares=authelia"                 #<== Add Authelia middlewares to protect login
+      - "traefik.http.routers.filebrowser-secured.service=filebrowser-service"          #<== Set service
+      - "traefik.http.services.filebrowser-service.loadbalancer.server.port=80"         #<== Set target port on container
+
+
+
+networks:
+  mc-backend:
+    name: mc-backend
+    driver: bridge
+  proxy:
+    external: true
