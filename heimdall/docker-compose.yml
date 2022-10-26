@@ -13,7 +13,7 @@ services:
       - PGID=1000
       - TZ=${TimeZone}
     volumes:
-      - ./data/heimdall:/config
+      - ./data:/config
     networks:
       - proxy
     labels:
