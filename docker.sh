@@ -193,8 +193,8 @@ CreateStack()
     else
         mkdir $STACKNAME
         mkdir $STACKNAME/data
-        if [ -f "docker-compose.dflt.yml" ]; then
-            cp docker-compose.dflt.yml $STACKNAME/docker-compose.yml
+        if [ -f "docker-compose.tmpl.yml" ]; then
+            cp docker-compose.tmpl.yml $STACKNAME/docker-compose.yml
         else
             touch $STACKNAME/docker-compose.yml
         fi
