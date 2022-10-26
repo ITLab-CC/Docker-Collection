@@ -1,0 +1,227 @@
+version: "2.2"
+
+services:
+  ###############################################
+  ####               Mailu                  #####
+  ###############################################
+  # External dependencies
+  redis:
+    container_name: mailu-redis
+    image: redis:alpine
+    restart: unless-stopped
+    volumes:
+      - "./data/redis:/data"
+
+  front:
+    image: mailu-front
+    container_name: ${DOCKER_ORG:-mailu}/${DOCKER_PREFIX:-}nginx:${MAILU_VERSION:-1.8}
+    restart: unless-stopped
+    depends_on:
+      - redis
+      - certdumper
+      - resolver
+      - admin
+      - webdav
+    env_file: mailu.env
+    logging:
+      driver: json-file
+    volumes:
+      - "./data/certs:/certs"
+      - "./data/overrides/nginx:/overrides:ro"
+    #ports:
+      #- "1000:80"
+      #- "443:443"
+      #- "25:25"
+      #- "465:465"
+      #- "587:587"
+      #- "110:110"
+      #- "995:995"
+      #- "143:143"
+      #- "993:993"
+    networks:
+      - proxy
+      - mailu
+    labels:
+      - "traefik.enable=true"                                                 #<== Enable traefik
+      - "traefik.http.routers.mailu-secured.rule=Host(`mail.${DOMAIN}`)"      #<== Set domain
+      - "traefik.http.routers.mailu-secured.entrypoints=websecure"            #<== Set entry point for HTTPS
+      - "traefik.http.routers.mailu-secured.tls.certresolver=mytlschallenge"  #<== Set certsresolvers for https
+      - "traefik.http.routers.mailu-secured.middlewares=authelia"             #<== Add Authelia middlewares to protect login
+      - "traefik.http.routers.mailu-secured.service=mailu-service"            #<== Set service
+      - "traefik.http.services.mailu-service.loadbalancer.server.port=80"     #<== Set target port on container
+
+      - "traefik.tcp.routers.mailu-smtp-relay.rule=HostSNI(`mail.${DOMAIN}`)"       #<== Set domain
+      - "traefik.tcp.routers.mailu-smtp-relay.entrypoints=smtp-25"                  #<== Set entry point for smtp 25
+      - "traefik.tcp.routers.mailu-smtp-relay.tls=false"                            #<== Disable encryption
+      - "traefik.tcp.routers.mailu-smtp-relay.service=mailu-smtp-relay-service"     #<== Set service
+      - "traefik.tcp.services.mailu-smtp-relay-service.loadbalancer.server.port=25" #<== Set target port on container
+
+      - "traefik.tcp.routers.mailu-smtp-ssl.rule=HostSNI(`mail.${DOMAIN}`)"         #<== Set domain
+      - "traefik.tcp.routers.mailu-smtp-ssl.entrypoints=smtp-465"                   #<== Set entry point for smtp 465
+      - "traefik.tcp.routers.mailu-smtp-ssl.tls.passthrough=true"                   #<== TLS passthrough. Mailu will take care of the encryption
+      - "traefik.tcp.routers.mailu-smtp-ssl.service=mailu-smtp-ssl-service"         #<== Set service
+      - "traefik.tcp.services.mailu-smtp-ssl-service.loadbalancer.server.port=465"  #<== Set target port on container
+
+      - "traefik.tcp.routers.mailu-smtp.rule=HostSNI(`mail.${DOMAIN}`)"         #<== Set domain
+      - "traefik.tcp.routers.mailu-smtp.entrypoints=smtp-587"                   #<== Set entry point for smtp 587
+      - "traefik.tcp.routers.mailu-smtp.tls.passthrough=true"                   #<== TLS passthrough. Mailu will take care of the encryption
+      - "traefik.tcp.routers.mailu-smtp.service=mailu-smtp-service"             #<== Set service
+      - "traefik.tcp.services.mailu-smtp-service.loadbalancer.server.port=587"  #<== Set target port on container
+
+      # - "traefik.tcp.routers.mailu-smtp-2525.rule=HostSNI(`mail.${DOMAIN}`)"  #<== Set domain
+      # - "traefik.tcp.routers.mailu-smtp-2525.entrypoints=smtp-2525"           #<== Set entry point for smtp 2525
+      # - "traefik.tcp.routers.mailu-smtp-2525.tls.passthrough=true"            #<== TLS passthrough. Mailu will take care of the encryption
+      # - "traefik.tcp.routers.mailu-smtp-2525.service=mailu-smtp-service"      #<== Set service
+
+      # - "traefik.tcp.routers.mailu-pop3.rule=HostSNI(`mail.${DOMAIN}`)"         #<== Set domain
+      # - "traefik.tcp.routers.mailu-pop3.entrypoints=pop-110"                    #<== Set entry point for pop3 110
+      # - "traefik.tcp.routers.mailu-pop3.tls=false"                              #<== Disable encryption
+      # - "traefik.tcp.routers.mailu-pop3.service=mailu-pop3-service"             #<== Set service
+      # - "traefik.tcp.services.mailu-pop3-service.loadbalancer.server.port=110"  #<== Set target port on container
+
+      - "traefik.tcp.routers.mailu-pop3-ssl.rule=HostSNI(`mail.${DOMAIN}`)"         #<== Set domain
+      - "traefik.tcp.routers.mailu-pop3-ssl.entrypoints=pop-995"                    #<== Set entry point for pop3 110
+      - "traefik.tcp.routers.mailu-pop3-ssl.tls.passthrough=true"                   #<== TLS passthrough. Mailu will take care of the encryption
+      - "traefik.tcp.routers.mailu-pop3-ssl.service=mailu-pop3-ssl-service"         #<== Set service
+      - "traefik.tcp.services.mailu-pop3-ssl-service.loadbalancer.server.port=995"  #<== Set target port on container
+
+      # - "traefik.tcp.routers.mailu-imap.rule=HostSNI(`mail.${DOMAIN}`)"         #<== Set domain
+      # - "traefik.tcp.routers.mailu-imap.entrypoints=imap-143"                   #<== Set entry point for pop3 110
+      # - "traefik.tcp.routers.mailu-imap.tls=false"                              #<== Disable encryption
+      # - "traefik.tcp.routers.mailu-imap.service=mailu-imap-service"             #<== Set service
+      # - "traefik.tcp.services.mailu-imap-service.loadbalancer.server.port=143"  #<== Set target port on container
+
+      - "traefik.tcp.routers.mailu-imap-ssl.rule=HostSNI(`mail.${DOMAIN}`)"         #<== Set domain
+      - "traefik.tcp.routers.mailu-imap-ssl.entrypoints=imap-993"                   #<== Set entry point for pop3 110
+      - "traefik.tcp.routers.mailu-imap-ssl.tls.passthrough=true"                   #<== TLS passthrough. Mailu will take care of the encryption
+      - "traefik.tcp.routers.mailu-imap-ssl.service=mailu-imap-ssl-service"         #<== Set service
+      - "traefik.tcp.services.mailu-imap-ssl-service.loadbalancer.server.port=993"  #<== Set target port on container
+
+
+  certdumper:
+    container_name: mailu-certdumper
+    restart: unless-stopped
+    image: mailu/traefik-certdumper:${MAILU_VERSION:-1.8}
+    environment:
+      - TRAEFIK_VERSION=v2
+      - DOMAIN=mail.${DOMAIN}
+    volumes:
+      - "${TraefikPath}:/traefik"
+      - "./data/certs:/output"
+
+
+  resolver:
+    container_name: mailu-resolver
+    image: ${DOCKER_ORG:-mailu}/${DOCKER_PREFIX:-}unbound:${MAILU_VERSION:-1.8}
+    env_file: mailu.env
+    restart: unless-stopped
+    networks:
+      mailu:
+        ipv4_address: 192.168.203.254
+
+  admin:
+    container_name: mailu-admin
+    image: ${DOCKER_ORG:-mailu}/${DOCKER_PREFIX:-}admin:${MAILU_VERSION:-1.8}
+    restart: unless-stopped
+    env_file: mailu.env
+    volumes:
+      - "./data/data:/data"
+      - "./data/dkim:/dkim"
+    depends_on:
+      - redis
+
+  imap:
+    container_name: mailu-imap
+    image: ${DOCKER_ORG:-mailu}/${DOCKER_PREFIX:-}dovecot:${MAILU_VERSION:-1.8}
+    restart: unless-stopped
+    env_file: mailu.env
+    volumes:
+      - "./data/mail:/mail"
+      - "./data/overrides/dovecot:/overrides:ro"
+    depends_on:
+      - front
+
+  smtp:
+    container_name: mailu-smtp
+    image: ${DOCKER_ORG:-mailu}/${DOCKER_PREFIX:-}postfix:${MAILU_VERSION:-1.8}
+    restart: unless-stopped
+    env_file: mailu.env
+    volumes:
+      - "./data/mailqueue:/queue"
+      - "./data/overrides/postfix:/overrides:ro"
+    depends_on:
+      - front
+      - resolver
+    dns:
+      - 192.168.203.254
+
+  antispam:
+    container_name: mailu-antispam
+    image: ${DOCKER_ORG:-mailu}/${DOCKER_PREFIX:-}rspamd:${MAILU_VERSION:-1.8}
+    hostname: antispam
+    restart: unless-stopped
+    env_file: mailu.env
+    volumes:
+      - "./data/filter:/var/lib/rspamd"
+      - "./data/dkim:/dkim:ro"
+      - "./data/overrides/rspamd:/etc/rspamd/override.d:ro"
+    depends_on:
+      - front
+      - resolver
+    dns:
+      - 192.168.203.254
+
+  # Optional services
+  antivirus:
+    container_name: mailu-antivirus
+    image: ${DOCKER_ORG:-mailu}/${DOCKER_PREFIX:-}clamav:${MAILU_VERSION:-1.8}
+    restart: unless-stopped
+    env_file: mailu.env
+    volumes:
+      - "./data/filter:/data"
+    depends_on:
+      - resolver
+    dns:
+      - 192.168.203.254
+
+  webdav:
+    container_name: mailu-webdav
+    image: ${DOCKER_ORG:-mailu}/${DOCKER_PREFIX:-}radicale:${MAILU_VERSION:-1.8}
+    restart: unless-stopped
+    env_file: mailu.env
+    volumes:
+      - "./data/dav:/data"
+
+  fetchmail:
+    container_name: mailu-fetchmail
+    image: ${DOCKER_ORG:-mailu}/${DOCKER_PREFIX:-}fetchmail:${MAILU_VERSION:-1.8}
+    restart: unless-stopped
+    env_file: mailu.env
+    depends_on:
+      - resolver
+    dns:
+      - 192.168.203.254
+
+  # Webmail
+  webmail:
+    container_name: mailu-webmail
+    image: ${DOCKER_ORG:-mailu}/${DOCKER_PREFIX:-}roundcube:${MAILU_VERSION:-1.8}
+    restart: unless-stopped
+    env_file: mailu.env
+    volumes:
+      - "./data/webmail:/data"
+    depends_on:
+      - imap
+
+
+networks:
+  mailu:
+    name: mailu-backend
+    driver: bridge
+    ipam:
+      driver: mailu
+      config:
+        - subnet: 192.168.203.0/24
+          gateway: 192.168.203.1
+  proxy:
+    external: true
