@@ -1,4 +1,4 @@
-.stackignore
-global.env
-global.env.temp
-docker-compose.dflt.yml
+/.stackignore
+/global.env
+/global.env.temp
+/docker-compose.dflt.yml
