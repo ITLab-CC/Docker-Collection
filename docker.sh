@@ -15,6 +15,7 @@ if [ ! -f ".gitignore" ]; then
 fi;
 
 STACK=;
+StackIgnore=;
 if [ -f ".stackignore" ]; then
     readarray -t StackIgnore < .stackignore
 else
@@ -140,7 +141,7 @@ RunStack()
         #All
         for d in */ ; do
             if [ -f "${d}docker-compose.yml" ]; then
-                if [[ ! " ${StackIgnore[*]}/ " =~ " ${d} " ]]; then
+                if [[ ! " ${StackIgnore[*]} " =~ " ${d} " ]]; then
                     echo -n "[${d}]: ";
                     cd ${d}
 
