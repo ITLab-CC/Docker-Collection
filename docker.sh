@@ -199,7 +199,7 @@ CreateStack()
             touch $STACKNAME/docker-compose.yml
         fi
         cp global.env $STACKNAME/.env
-        echo -e ".env\ndata" >> $STACKNAME/.gitignore
+        echo -e "/.env\n/data\n/data/*" >> $STACKNAME/.gitignore
         echo -e "# $STACKNAME" >> $STACKNAME/README.md
     fi
 }
