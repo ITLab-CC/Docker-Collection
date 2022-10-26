@@ -122,6 +122,15 @@ RunStack()
         if [ -f "${STACK}/docker-compose.yml" ]; then
             echo -n "[${STACK}]: ";
             cd ${STACK}
+
+            # Copy template files
+            if [ -d "data.tmpl" ] && [[ ! -d "data" ]]; then
+                cp "data.tmpl" "data" -r
+            fi
+            if [ -f ".env.tmpl" ] && [[ ! -f ".env" ]]; then
+                cp ".env.tmpl" ".env"
+            fi
+
             docker-compose up -d --remove-orphans
             cd ..
         else
@@ -134,6 +143,15 @@ RunStack()
                 if [[ ! " ${StackIgnore[*]}/ " =~ " ${d} " ]]; then
                     echo -n "[${d}]: ";
                     cd ${d}
+
+                    # Copy template files
+                    if [ -d "data.tmpl" ] && [[ ! -d "data" ]]; then
+                        cp "data.tmpl" "data" -r
+                    fi
+                    if [ -f ".env.tmpl" ] && [[ ! -f ".env" ]]; then
+                        cp ".env.tmpl" ".env"
+                    fi
+
                     docker-compose up -d --remove-orphans --build
                     cd ..
                 fi
