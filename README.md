@@ -72,6 +72,38 @@ Example:
 ## Stop all containers/stacks
 `./docker.sh -s`
 
+## File structure
+```
+.
+├── StackName1
+│   ├── build (optional)
+│   │   └── dockerfile (optional)
+│   ├── data (folder)
+│   ├── data.tmpl (folder)
+│   ├── docker-compose.yml (optional)
+│   ├── .env.tmpl (optional)
+│   ├── .env
+│   ├── .gitignore
+│   └── README.md
+│
+├── StackName2
+│   ├── ...
+│   ...
+│
+├── .gitignore
+├── .stackignore
+├── docker.sh
+├── global.env
+├── global.env.temp
+└── README.md
+```
+
+## data.tmpl and .env.tmpl
+If there is no `data` folder, the `data.tmpl` folder will be copied (`data.tmpl`->`data`). The same will be done for the `.env.tmpl` file (`.env.tmpl`->`.env`).
+
+## docker-compose.tmpl.yml
+Suppose you create a new stack with `docker.sh -c [StackName]` the `docker-compose.tmpl.yml` file from the root folder will be copied to the newly created stack.
+
 ## .stackignore
 If you run `./docker.sh -r` or `./docker.sh -s` the script will look into each folder in this directory and look for a file named `docker-composed.yml`. If it exists it will deploy this stack. If you want to ignore a folder you have to write the name of the folder in the `.stackignore` file. It works similarly to the .gitignore file.\
 Example:
@@ -83,6 +115,7 @@ onedrive
 webtop
 ```
 When you now run `./docker.sh -r` or `./docker.sh -s` all the stacks will start/stop except `nextcloud`, `onedrive` and `webtop`
+
 ## global.env
 Every time you run `docker.sh` it will check that all the environment variables in the `global.env` file are present in each `.env` file in each folder in this directory. The `.stackignore` file doesn't have any impact on this function. This means it will update also the `.env` file even if this stack is in the `.stackignore` file. If you delete or update a variable from the `global.env` file, it will detect this and will remove it from each `.env` file.
 Example:
