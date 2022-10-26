@@ -1,0 +1,28 @@
+version: "3.3"
+
+services:
+  ###############################################
+  ####               Gotify                 #####
+  ###############################################
+  gotify:
+    image: gotify/server:latest
+    container_name: gotify
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges
+    volumes:
+       - ./data/gotify:/app/data
+    networks:
+      - proxy
+    labels:
+      - "traefik.enable=true"                                                 #<== Enable traefik
+      - "traefik.http.routers.gotify-secured.rule=HOST(`push.${DOMAIN}`)"     #<== Set domain
+      - "traefik.http.routers.gotify-secured.entrypoints=websecure"           #<== Set entry point for HTTPS
+      - "traefik.http.routers.gotify-secured.tls.certresolver=mytlschallenge" #<== Set certsresolvers for https
+      # - "traefik.http.routers.gotify-secured.middlewares=authelia"          #<== Add Authelia middlewares to protect login
+      - "traefik.http.routers.gotify-secured.service=gotify-service"          #<== Set service
+      - "traefik.http.services.gotify-service.loadbalancer.server.port=80"    #<== Set target port on container
+
+networks:
+  proxy:
+    external: true
