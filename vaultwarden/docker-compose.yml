@@ -1,0 +1,30 @@
+version: "3.3"
+
+services:
+  ###############################################
+  ####            Vaultwarden               #####
+  ###############################################
+  vaultwarden:
+    image: vaultwarden/server:latest
+    container_name: vaultwarden
+    restart: unless-stopped
+    environment:
+      - "ADMIN_TOKEN=${BW_ADMIN_TOKEN}"
+      - TZ=${TimeZone}
+      # - SMTP_DEBUG=true
+    volumes:
+       - ./data:/data
+    networks:
+      - proxy
+    labels:
+      - "traefik.enable=true"                                                      #<== Enable traefik
+      - "traefik.http.routers.vaultwarden-secured.rule=HOST(`vault.${DOMAIN}`)"    #<== Set domain
+      - "traefik.http.routers.vaultwarden-secured.entrypoints=websecure"           #<== Set entry point for HTTPS
+      - "traefik.http.routers.vaultwarden-secured.tls.certresolver=mytlschallenge" #<== Set certsresolvers for https
+      - "traefik.http.routers.vaultwarden-secured.middlewares=authelia"            #<== Add Authelia middlewares to protect login
+      - "traefik.http.routers.vaultwarden-secured.service=vaultwarden-service"     #<== Set service
+      - "traefik.http.services.vaultwarden-service.loadbalancer.server.port=80"    #<== Set target port on container
+
+networks:
+  proxy:
+    external: true
