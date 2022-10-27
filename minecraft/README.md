@@ -30,7 +30,7 @@ cd ../../../../../
 
 ## Edit velocity.toml
 
-`nano minecraft/data/proxy/velocity.toml`\
+`nano minecraft/data/minecraft/proxy/velocity.toml`\
 old:
 ```yaml
 
