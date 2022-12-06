@@ -23,7 +23,7 @@ services:
       - proxy
     labels:
       - "traefik.enable=true"                                                 #<== Enable traefik
-      - "traefik.http.routers.gitlab-secured.rule=HOST(`git.${DOMAIN}`)"      #<== Set domain
+      - "traefik.http.routers.gitlab-secured.rule=Host(`git.${DOMAIN}`)"      #<== Set domain
       - "traefik.http.routers.gitlab-secured.entrypoints=websecure"           #<== Set entry point for HTTPS
       - "traefik.http.routers.gitlab-secured.tls.certresolver=mytlschallenge" #<== Set certsresolvers for https
       - "traefik.http.routers.gitlab-secured.middlewares=authelia"            #<== Add Authelia middlewares to protect login

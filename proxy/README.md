@@ -381,7 +381,7 @@ From now on it's pretty simple to add a new web container with traefik as a reve
       - proxy
     labels:
       - "traefik.enable=true"                                                  #<== Enable traefik
-      - "traefik.http.routers.EXAMPLE-secured.rule=HOST(`EXAMPLE.${DOMAIN}`)"  #<== Set domain
+      - "traefik.http.routers.EXAMPLE-secured.rule=Host(`EXAMPLE.${DOMAIN}`)"  #<== Set domain
       - "traefik.http.routers.EXAMPLE-secured.entrypoints=websecure"           #<== Set entry point for HTTPS
       - "traefik.http.routers.EXAMPLE-secured.tls.certresolver=mytlschallenge" #<== Set certsresolvers for https
       - "traefik.http.routers.EXAMPLE-secured.middlewares=authelia"            #<== Add Authelia middlewares to protect login
@@ -398,7 +398,7 @@ Now replace the word `EXAMPLE` with the name of the container and replace the de
       - proxy
     labels:
       - "traefik.enable=true"                                                 #<== Enable traefik
-      - "traefik.http.routers.whoami-secured.rule=HOST(`whoami.${DOMAIN}`)"   #<== Set domain
+      - "traefik.http.routers.whoami-secured.rule=Host(`whoami.${DOMAIN}`)"   #<== Set domain
       - "traefik.http.routers.whoami-secured.entrypoints=websecure"           #<== Set entry point for HTTPS
       - "traefik.http.routers.whoami-secured.tls.certresolver=mytlschallenge" #<== Set certsresolvers for https
       - "traefik.http.routers.whoami-secured.middlewares=authelia"            #<== Add Authelia middlewares to protect login
