@@ -16,7 +16,7 @@ services:
       - proxy
     labels:
       - "traefik.enable=true"                                                 #<== Enable traefik
-      - "traefik.http.routers.gotify-secured.rule=HOST(`push.${DOMAIN}`)"     #<== Set domain
+      - "traefik.http.routers.gotify-secured.rule=Host(`push.${DOMAIN}`)"     #<== Set domain
       - "traefik.http.routers.gotify-secured.entrypoints=websecure"           #<== Set entry point for HTTPS
       - "traefik.http.routers.gotify-secured.tls.certresolver=mytlschallenge" #<== Set certsresolvers for https
       # - "traefik.http.routers.gotify-secured.middlewares=authelia"          #<== Add Authelia middlewares to protect login
