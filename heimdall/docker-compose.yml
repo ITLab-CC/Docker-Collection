@@ -18,7 +18,7 @@ services:
       - proxy
     labels:
       - "traefik.enable=true"                                                                     #<== Enable traefik
-      - "traefik.http.routers.heimdall-secured.rule=HOST(`${DOMAIN}`)  || Host(`www.${DOMAIN}`)"  #<== Set domain
+      - "traefik.http.routers.heimdall-secured.rule=Host(`${DOMAIN}`)  || Host(`www.${DOMAIN}`)"  #<== Set domain
       - "traefik.http.routers.heimdall-secured.entrypoints=websecure"                             #<== Set entry point for HTTPS
       - "traefik.http.routers.heimdall-secured.tls.certresolver=mytlschallenge"                   #<== Set certsresolvers for https
       - "traefik.http.routers.heimdall-secured.middlewares=authelia"                              #<== Add Authelia middlewares to protect login
