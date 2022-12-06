@@ -269,7 +269,7 @@ services:
       # - "1000:80"
     labels:
       - "traefik.enable=true"                                                 #<== Enable traefik **ref: "--providers.docker.exposedbydefault=false"
-      - "traefik.http.routers.whoami-secured.rule=HOST(`whoami.${DOMAIN}`)"   #<== Set domain
+      - "traefik.http.routers.whoami-secured.rule=Host(`whoami.${DOMAIN}`)"   #<== Set domain
       - "traefik.http.routers.whoami-secured.entrypoints=websecure"           #<== Set entrypoint for https, **ref: "--entrypoints.websecure.address=:443"
       - "traefik.http.routers.whoami-secured.tls.certresolver=mytlschallenge" #<== Set certsresolvers for https, **ref: "--certificatesresolvers.mytlschallenge.acme.tlschallenge=true"
       - "traefik.http.routers.whoami-secured.middlewares=authelia"            #<== Add Authelia middlewares to protect login
