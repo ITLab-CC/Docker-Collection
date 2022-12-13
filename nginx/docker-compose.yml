@@ -1,0 +1,26 @@
+version: "3.3"
+
+services:
+  ###############################################
+  ####                Nginx                 #####
+  ###############################################
+  nginx:
+    image: nginx
+    container_name: nginx
+    restart: unless-stopped
+    volumes:
+      - ./data/:/usr/share/nginx/html:ro
+    networks:
+      - proxy
+    labels:
+      - "traefik.enable=true"                                                #<== Enable traefik
+      - "traefik.http.routers.nginx-secured.rule=Host(`nginx.${DOMAIN}`)"    #<== Set domain
+      - "traefik.http.routers.nginx-secured.entrypoints=websecure"           #<== Set entry point for HTTPS
+      - "traefik.http.routers.nginx-secured.tls.certresolver=mytlschallenge" #<== Set certsresolvers for https
+      - "traefik.http.routers.nginx-secured.middlewares=authelia"            #<== Add Authelia middlewares to protect login
+      - "traefik.http.routers.nginx-secured.service=nginx-service"           #<== Set service
+      - "traefik.http.services.nginx-service.loadbalancer.server.port=80"    #<== Set target port on container
+
+networks:
+  proxy:
+    external: true
