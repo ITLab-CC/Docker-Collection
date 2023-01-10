@@ -1,0 +1,45 @@
+version: "3.3"
+
+services:
+  ###############################################
+  ####             fireflyiii               #####
+  ###############################################
+  fireflyiii:
+    image: fireflyiii/core:latest
+    container_name: fireflyiii
+    restart: unless-stopped
+    env_file: .env
+    volumes:
+      - ./data/upload:/var/www/html/storage/upload
+    networks:
+      - fireflyiii-backend
+      - proxy
+    labels:
+      - "traefik.enable=true"                                                     #<== Enable traefik
+      - "traefik.http.routers.fireflyiii-secured.rule=Host(`finance.${DOMAIN}`)"  #<== Set domain
+      - "traefik.http.routers.fireflyiii-secured.entrypoints=websecure"           #<== Set entry point for HTTPS
+      - "traefik.http.routers.fireflyiii-secured.tls.certresolver=mytlschallenge" #<== Set certsresolvers for https
+      - "traefik.http.routers.fireflyiii-secured.middlewares=authelia"            #<== Add Authelia middlewares to protect login
+      - "traefik.http.routers.fireflyiii-secured.service=fireflyiii-service"      #<== Set service
+      - "traefik.http.services.fireflyiii-service.loadbalancer.server.port=8080"  #<== Set target port on container
+
+  fireflyiii-db:
+    image: mariadb
+    container_name: fireflyiii-db
+    hostname: ${DB_HOST}
+    restart: always
+    environment:
+      - MYSQL_RANDOM_ROOT_PASSWORD=yes
+      - MYSQL_USER=${DB_USERNAME}
+      - MYSQL_PASSWORD=${DB_PASSWORD}
+      - MYSQL_DATABASE=${DB_DATABASE}
+    volumes:
+      - ./data/db:/var/lib/mysql
+    networks:
+      - fireflyiii-backend
+
+networks:
+  proxy:
+    external: true
+  fireflyiii-backend:
+    name: proxy-backend
