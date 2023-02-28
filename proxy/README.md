@@ -53,13 +53,15 @@ Get the zone id of your domain from https://dash.cloudflare.com/
 
 ### Cloudflar_API_Traefik_Token
 Get the API key from https://dash.cloudflare.com/profile/api-tokens
+![cloudflare create-token](img/cloudflare-create-token.png)
 ![cloudflare traefik-token](img/cloudflare-global-traefik-token.png)
-![cloudflare crowdsec api-key](img/cloudflare_cs_api_key2.png)
+![cloudflare api-key](img/cloudflare_cs_api_key2.png)
 
 ### Cloudflar_API_CfC_Token
 Get the API key from https://dash.cloudflare.com/profile/api-tokens
+![cloudflare create-token](img/cloudflare-create-token.png)
 ![cloudflare traefik-token](img/cloudflare-global-cfc-token.png)
-![cloudflare crowdsec api-key](img/cloudflare_cs_api_key2.png)
+![cloudflare api-key](img/cloudflare_cs_api_key2.png)
 
 ### Traefik_Pilot_Token
 Register the traefik instance at https://pilot.traefik.io/ and get the key.
