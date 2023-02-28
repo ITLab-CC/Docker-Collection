@@ -36,28 +36,28 @@ Edit the `.env` file to configure the environment variables
 # ...
 # Traefik
 Cloudflare_Email='example@example.com'                                  #<== Email from Cloudflair
-Cloudflar_API_Traefik_Token='xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx'     #<== API Token (Zone/Zone/Read and Zone/DNS/Edit) https://dash.cloudflare.com/profile/api-tokens
+Cloudflare_API_Traefik_Token='xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx'     #<== API Token (Zone/Zone/Read and Zone/DNS/Edit) https://dash.cloudflare.com/profile/api-tokens
 
 # Cloudflare-Companion - Automatic CNAME DNS Creation
-Cloudflar_Zonen_ID='xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx'           #<== Zone-id
-Cloudflar_API_CfC_Token='xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx'      #<== API Token (Zone/DNS/Edit) https://dash.cloudflare.com/profile/api-tokens
+Cloudflare_Zonen_ID='xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx'           #<== Zone-id
+Cloudflare_API_CfC_Token='xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx'      #<== API Token (Zone/DNS/Edit) https://dash.cloudflare.com/profile/api-tokens
 
 # Crowdsec Bouncer Key
 Crowdsec_Bouncer_Traefik_API='xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx' #<== API Key Crowdsec Bouncer
 # ...
 ```
 The next steps will show you where you can get the missing pieces of information above:
-### Cloudflar_Zonen_ID:
+### Cloudflare_Zonen_ID:
 Get the zone id of your domain from https://dash.cloudflare.com/
 ![cloudflare zone-id and api-key](img/cloudflare-zone-id-api-key.png)
 
-### Cloudflar_API_Traefik_Token
+### Cloudflare_API_Traefik_Token
 Get the API key from https://dash.cloudflare.com/profile/api-tokens
 ![cloudflare create-token](img/cloudflare-create-token.png)
 ![cloudflare traefik-token](img/cloudflare-global-traefik-token.png)
 ![cloudflare api-key](img/cloudflare_cs_api_key2.png)
 
-### Cloudflar_API_CfC_Token
+### Cloudflare_API_CfC_Token
 Get the API key from https://dash.cloudflare.com/profile/api-tokens
 ![cloudflare create-token](img/cloudflare-create-token.png)
 ![cloudflare traefik-token](img/cloudflare-global-cfc-token.png)
