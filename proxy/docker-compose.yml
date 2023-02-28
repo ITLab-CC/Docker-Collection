@@ -50,10 +50,12 @@ services:
       ##- --certificatesresolvers.mytlschallenge.acme.email=${Email}                 #<== Setting email for certs
       #- --certificatesresolvers.mytlschallenge.acme.storage=/letsencrypt/acme.json  #<== Defining acme file to store cert information
       # OR use Cloudflair
-      - --certificatesresolvers.mytlschallenge.acme.dnschallenge=true
+      - --certificatesResolvers.mytlschallenge.acme.dnsChallenge=true
       - --certificatesresolvers.mytlschallenge.acme.dnschallenge.provider=cloudflare
-      #- --certificatesresolvers.mytlschallenge.acme.email=${Email}
-      - --certificatesresolvers.mytlschallenge.acme.storage=/letsencrypt/acme.json
+      - --certificatesresolvers.mytlschallenge.acme.dnschallenge.resolvers=1.1.1.1:53,8.8.8.8:53
+      - --certificatesresolvers.mytlschallenge.acme.dnschallenge.delaybeforecheck=0
+      - --certificatesresolvers.mytlschallenge.acme.email=${Email}
+      - --certificatesResolvers.mytlschallenge.acme.storage=/letsencrypt/acme.json
 
 
 
@@ -86,13 +88,13 @@ services:
       # #- "--entrypoints.imap-143.address=:143"   #<== IMAP
       # - "--entrypoints.imap-993.address=:993"    #<== IMAP
     environment:
-      - CLOUDFLARE_EMAIL=${Cloudflare_Email}      #Email from Cloudflair
-      - CLOUDFLARE_API_KEY=${Cloudflar_API_Key}   #Global API Key: https://dash.cloudflare.com/profile/api-tokens
+      - CF_API_EMAIL=${Cloudflare_Email}                #<== Email from Cloudflair
+      - CF_DNS_API_TOKEN=${Cloudflare_API_Traefik_Token} #<== API token https://dash.cloudflare.com/profile/api-tokens (Zone/Zone/Read and Zone/DNS/Edit) docs: https://go-acme.github.io/lego/dns/cloudflare/#api-tokens
     volumes:
       - ./data/traefik/letsencrypt:/letsencrypt        #<== Volume for certs (SSL/TLS)
       - /var/run/docker.sock:/var/run/docker.sock:ro   #<== Volume for docker admin
       - /var/log/traefik/:/var/log/traefik/            #<== Traefik Logs (for crowdsec)
-      #- ./data/traefik/dynamic.yaml:/dynamic.yaml #<== Volume for dynamic conf file. This file must exist! , **ref: "--providers.file.filename=/dynamic.yaml"
+      #- ./data/traefik/dynamic.yaml:/dynamic.yaml     #<== Volume for dynamic conf file. This file must exist! , **ref: "--providers.file.filename=/dynamic.yaml"
     networks:
       - proxy # <== Placing traefik on the network named web, to access containers on this network
       - proxy-backend
@@ -127,11 +129,10 @@ services:
     environment:
       - TIMEZONE=${TimeZone}
       - TRAEFIK_VERSION=2                     #<== Set trafik version
-      - CF_EMAIL=${Cloudflare_Email}          #<== cloudflare email. Same as the one set in the traefik environment variables
-      - CF_TOKEN=${Cloudflar_API_Key}         #<== cloudflare global api key. Same as the one set in the traefik environment variables
+      - CF_TOKEN=${Cloudflare_API_CfC_Token}   #<== API Token (Zone/DNS/Edit) https://dash.cloudflare.com/profile/api-tokens
       - TARGET_DOMAIN=${DOMAIN}               #<== Main domain. Has to be regestered in cloudflare
       - DOMAIN1=${DOMAIN}
-      - DOMAIN1_ZONE_ID=${Cloudflar_Zonen_ID} #<== Cloudflar zonen ID. Copy from Cloudflare Overview page
+      - DOMAIN1_ZONE_ID=${Cloudflare_Zonen_ID} #<== Cloudflare zonen ID. Copy from Cloudflare Overview page
       - DOMAIN1_PROXIED=FALSE                 #<== Set to TRUE if you want to to proxy traffic through cloudflare (more secure)
 
 
