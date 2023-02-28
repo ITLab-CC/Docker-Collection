@@ -28,31 +28,38 @@ cd ../../../../
 ```
 Now run it. It won't work but we need to execute some commands on the running container.
 ```sh
-./docker.sh -S proxy -r
+docker-compose up -d
 ```
 ## Secrets in `.env`
 Edit the `.env` file to configure the environment variables
 ```yaml
-DOMAIN="example.com"
-TimeZone='Europe/Berlin'
-Email='example@example.com'
+# ...
+# Traefik
+Cloudflare_Email='example@example.com'                                  #<== Email from Cloudflair
+Cloudflar_API_Traefik_Token='xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx'     #<== API Token (Zone/Zone/Read and Zone/DNS/Edit) https://dash.cloudflare.com/profile/api-tokens
 
-Cloudflare_Email='example@example.com'                          #<== Email from Cloudflair
-Cloudflar_API_Key='xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx'       #<== Global API Key: https://dash.cloudflare.com/profile/api-tokens
+# Cloudflare-Companion - Automatic CNAME DNS Creation
 Cloudflar_Zonen_ID='xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx'           #<== Zone-id
-#Traefik_Pilot_Token='xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx'     #<== If you want to see statistics on https://pilot.traefik.io/
-#Traefik_Auth='user:xxxxxxxxxxxxxx-hash-xxxxxxxxxxxxxx' # <- HASH Value "echo $(htpasswd -nb USER PASSWORT) | sed -e s/\\$/\\$\\$/g"
+Cloudflar_API_CfC_Token='xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx'      #<== API Token (Zone/DNS/Edit) https://dash.cloudflare.com/profile/api-tokens
 
-Crowdsec_Bouncer_Traefik_API='xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx'
+# Crowdsec Bouncer Key
+Crowdsec_Bouncer_Traefik_API='xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx' #<== API Key Crowdsec Bouncer
+# ...
 ```
 The next steps will show you where you can get the missing pieces of information above:
 ### Cloudflar_Zonen_ID:
 Get the zone id of your domain from https://dash.cloudflare.com/
 ![cloudflare zone-id and api-key](img/cloudflare-zone-id-api-key.png)
 
-### Cloudflar_API_Key
+### Cloudflar_API_Traefik_Token
 Get the API key from https://dash.cloudflare.com/profile/api-tokens
-![cloudflare global-api-key](img/cloudflare-global-api-key.png)
+![cloudflare traefik-token](img/cloudflare-global-traefik-token.png)
+![cloudflare crowdsec api-key](img/cloudflare_cs_api_key2.png)
+
+### Cloudflar_API_CfC_Token
+Get the API key from https://dash.cloudflare.com/profile/api-tokens
+![cloudflare traefik-token](img/cloudflare-global-cfc-token.png)
+![cloudflare crowdsec api-key](img/cloudflare_cs_api_key2.png)
 
 ### Traefik_Pilot_Token
 Register the traefik instance at https://pilot.traefik.io/ and get the key.
