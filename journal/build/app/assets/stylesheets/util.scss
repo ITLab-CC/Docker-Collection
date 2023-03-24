@@ -1,0 +1,115 @@
+.bg-grey {
+  background: #272727;
+}
+
+.flex {
+  display: flex;
+  align-items: center;
+}
+
+.flex-space-between {
+  justify-content: space-between;
+}
+
+.clearfix::after {
+  content: "";
+  clear: both;
+  display: table;
+}
+
+.text-center {
+  text-align: center;
+}
+
+.text-muted {
+  color: #6b6b6b;
+}
+
+.text-small {
+  font-size: 13px;
+}
+
+.text-accent {
+  color: #FFA836
+}
+
+.text-accent-muted {
+  color: #b97925;
+}
+
+.text-right {
+  text-align: right;
+}
+
+.reading-content {
+  white-space: pre-wrap;
+  font-family: georgia;
+  line-height: 26px;
+  font-size: 16px;
+}
+
+.break-words {
+  word-break: break-all;
+}
+
+.bold {
+  font-weight: 600;
+}
+
+.ml-5 {
+  margin-left: 5px;
+}
+
+.mt-8 {
+  margin-top: 8px;
+}
+
+.mt-10 {
+  margin-top: 10px;
+}
+
+.mt-20 {
+  margin-top: 20px;
+}
+
+.mt-30 {
+  margin-top: 30px;
+}
+
+.mt-60 {
+  margin-top: 60px;
+}
+
+.mt-100 {
+  margin-top: 100px;
+}
+
+.mt-200 {
+  margin-top: 200px;
+}
+
+.mb-20 {
+  margin-bottom: 20px;
+}
+
+.p-20 {
+  padding: 20px;
+}
+
+.pv-20 {
+  padding-top: 20px;
+  padding-bottom: 20px;
+}
+
+.ph-30 {
+  padding-right: 30px;
+  padding-left: 30px;
+}
+
+.mw-80 {
+  min-width: 80px;
+}
+
+.max-w-100 {
+  max-width: 100%;
+}
