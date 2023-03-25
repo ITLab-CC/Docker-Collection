@@ -29,9 +29,9 @@ services:
     environment:
       - PUID=1000
       - PGID=1000
-      - TZ=${TIMEZONE}
+      - TZ=${TimeZone}
       - SERVERPORT=51820
-      - SERVERURL=${WIREGUARD_SERVER_URL} # Change to your domain
+      - SERVERURL=${DOMAIN} # Change to your domain
       - PEERS=${WIREGUARD_PEERS} # Change to your peers
       - PEERDNS=10.2.0.100 # Set it to point to pihole
       - INTERNAL_SUBNET=10.6.0.0
@@ -62,7 +62,7 @@ services:
       - 127.0.0.1
       - 10.2.0.200 # Points to unbound
     environment:
-      TZ: ${TIMEZONE}
+      TZ: ${TimeZone}
       WEBPASSWORD: ${PIHOLE_WEBPASSWORD}
       ServerIP: 10.2.0.100 # Internal IP of pihole
       DNS1: 10.2.0.200 # Unbound IP
@@ -78,25 +78,3 @@ services:
     networks:
       private_network:
         ipv4_address: 10.2.0.100
-  rest: # For Restic (Backup)
-    restart: always
-    image: restic/rest-server
-    networks:
-      private_network:
-        ipv4_address: 10.2.0.102
-    volumes:
-      - rest-data:/data
-    environment:
-      - DISABLE_AUTHENTICATION:1
-
-  registry:
-    restart: always
-    image: registry:2
-    ports:
-      - '127.0.0.1:5001:5000'
-    networks:
-      private_network:
-        ipv4_address: 10.2.0.104
-
-volumes:
-  rest-data:
