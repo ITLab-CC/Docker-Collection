@@ -1,0 +1,59 @@
+version: "3.3"
+
+services:
+  nextcloud:
+    image: nextcloud:apache
+    container_name: nextcloud
+    links:
+      - nextcloud-mariadb
+    depends_on:
+      - nextcloud-mariadb
+    environment:
+      - MYSQL_PASSWORD=${Password}
+      - MYSQL_DATABASE=nextcloud
+      - MYSQL_USER=nextcloud
+      - MYSQL_HOST=172.4.0.20
+      - TIMEZONE=${TimeZone}
+    volumes:
+      - ./data:/var/www/html
+    restart: unless-stopped
+    networks:
+      - proxy
+      - nextcloud
+    labels:
+      - "traefik.enable=true"                                                     #<== Enable traefik for this container, **ref: "--providers.docker.exposedbydefault=false"
+      - "traefik.http.routers.nextcloud-secured.rule=Host(`cloud.${DOMAIN}`)"     #<== Set domain
+      - "traefik.http.routers.nextcloud-secured.entrypoints=websecure"            #<== Defining entrypoint for https, **ref: "--entrypoints.websecure.address=:443"
+      - "traefik.http.routers.nextcloud-secured.tls.certresolver=mytlschallenge"  #<== Defining certsresolvers for https, **ref: "--certificatesresolvers.mytlschallenge.acme.tlschallenge=true"
+      - "traefik.http.services.nextcloud-secured.loadbalancer.server.port=80"     #<== Set destination port on this container
+
+  nextcloud-mariadb:
+    image: mariadb:10.8.2
+    container_name: nextcloud-mariadb
+    restart: unless-stopped
+    networks:
+      nextcloud:
+        ipv4_address: 172.4.0.20
+    command: 
+      --transaction-isolation=READ-COMMITTED 
+      --binlog-format=ROW 
+    volumes:
+      - ./db:/var/lib/mysql
+    environment:
+      - MYSQL_ROOT_PASSWORD=${Password}
+      - MYSQL_PASSWORD=${Password}
+      - MYSQL_DATABASE=nextcloud
+      - MYSQL_USER=nextcloud
+      - TIMEZONE=${TimeZone}
+
+networks:
+  nextcloud:
+    name: nextcloud
+    driver: bridge
+    ipam:
+      driver: default
+      config:
+        - subnet: 172.4.0.0/16
+
+  proxy:
+    external: true
