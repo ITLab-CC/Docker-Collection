@@ -14,6 +14,8 @@ services:
       - MYSQL_USER=nextcloud
       - MYSQL_HOST=172.4.0.20
       - TIMEZONE=${TimeZone}
+      - OVERWRITECLIURL=cloud.${DOMAIN}
+      - OVERWRITEPROTOCOL=https
     volumes:
       - ./data:/var/www/html
     restart: unless-stopped
@@ -26,6 +28,17 @@ services:
       - "traefik.http.routers.nextcloud-secured.entrypoints=websecure"            #<== Defining entrypoint for https, **ref: "--entrypoints.websecure.address=:443"
       - "traefik.http.routers.nextcloud-secured.tls.certresolver=mytlschallenge"  #<== Defining certsresolvers for https, **ref: "--certificatesresolvers.mytlschallenge.acme.tlschallenge=true"
       - "traefik.http.services.nextcloud-secured.loadbalancer.server.port=80"     #<== Set destination port on this container
+      - traefik.http.routers.nextcloud-secured.middlewares=nextcloud,nextcloud_redirect
+      - traefik.http.middlewares.nextcloud.headers.customFrameOptionsValue=ALLOW-FROM https://${DOMAIN}
+      - traefik.http.middlewares.nextcloud.headers.contentSecurityPolicy=frame-ancestors 'self' ${DOMAIN} *.${DOMAIN}
+      - traefik.http.middlewares.nextcloud.headers.stsSeconds=155520011
+      - traefik.http.middlewares.nextcloud.headers.stsIncludeSubdomains=true
+      - traefik.http.middlewares.nextcloud.headers.stsPreload=true
+      - traefik.http.middlewares.nextcloud.headers.customresponseheaders.X-Frame-Options=SAMEORIGIN
+      - traefik.http.middlewares.nextcloud_redirect.redirectregex.permanent=true
+      - traefik.http.middlewares.nextcloud_redirect.redirectregex.regex=https://(.*)/.well-known/(card|cal)dav
+      - traefik.http.middlewares.nextcloud_redirect.redirectregex.replacement=https://$${1}/remote.php/dav/
+
 
   nextcloud-mariadb:
     image: mariadb:10.8.2
