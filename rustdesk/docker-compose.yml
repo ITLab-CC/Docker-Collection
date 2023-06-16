@@ -1,0 +1,39 @@
+version: "3.3"
+
+services:
+  ###############################################
+  ####              rustdesk                #####
+  ###############################################
+  rustdesk-hbbs:
+    image: rustdesk/rustdesk-server:latest
+    container_name: rustdesk-hbbs
+    restart: unless-stopped
+    command: hbbs -r rustdesk.${DOMAIN}:21117
+    environment:
+      - "ENCRYPTED_ONLY=1"
+    volumes:
+      - ./data:/root
+    networks:
+      - rustdesk-net
+    ports:
+      - 21115:21115
+      - 21116:21116
+      - 21116:21116/udp
+      - 21118:21118
+
+  rustdesk-hbbr:
+    image: rustdesk/rustdesk-server:latest
+    container_name: rustdesk-hbbr
+    restart: unless-stopped
+    command: hbbr
+    volumes:
+      - ./data:/root
+    networks:
+      - rustdesk-net
+    ports:
+      - 21117:21117
+      - 21119:21119
+
+networks:
+  rustdesk-net:
+    external: false
