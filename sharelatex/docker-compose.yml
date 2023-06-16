@@ -91,6 +91,7 @@ services:
     image: mongo:4.0
     container_name: sharelatex-mongo
     restart: unless-stopped
+    command: --replSet rs0
     volumes:
       - ./data/mongo:/data/db
     healthcheck:
