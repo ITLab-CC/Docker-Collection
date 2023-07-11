@@ -21,7 +21,7 @@ services:
       - "traefik.http.routers.vaultwarden-secured.rule=Host(`vault.${DOMAIN}`)"    #<== Set domain
       - "traefik.http.routers.vaultwarden-secured.entrypoints=websecure"           #<== Set entry point for HTTPS
       - "traefik.http.routers.vaultwarden-secured.tls.certresolver=mytlschallenge" #<== Set certsresolvers for https
-      - "traefik.http.routers.vaultwarden-secured.middlewares=authelia"            #<== Add Authelia middlewares to protect login
+      #- "traefik.http.routers.vaultwarden-secured.middlewares=authelia"            #<== Add Authelia middlewares to protect login
       - "traefik.http.routers.vaultwarden-secured.service=vaultwarden-service"     #<== Set service
       - "traefik.http.services.vaultwarden-service.loadbalancer.server.port=80"    #<== Set target port on container
 

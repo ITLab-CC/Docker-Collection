@@ -1,0 +1,28 @@
+version: "3.3"
+
+services:
+  ###############################################
+  ####              registry                #####
+  ###############################################
+  registry:
+    image: registry:2
+    container_name: registry
+    restart: unless-stopped
+    environment:
+      - REGISTRY_HTTP_ADDR=0.0.0.0:5000
+    volumes:
+      - ./data:/var/lib/registry
+    networks:
+      - proxy
+    labels:
+      - "traefik.enable=true"                                                  #<== Enable traefik
+      - "traefik.http.routers.registry-secured.rule=Host(`registry.criation.de`)"  #<== Set domain
+      - "traefik.http.routers.registry-secured.entrypoints=websecure"           #<== Set entry point for HTTPS
+      - "traefik.http.routers.registry-secured.tls.certresolver=mytlschallenge" #<== Set certsresolvers for https
+      #- "traefik.http.routers.registry-secured.middlewares=authelia"            #<== Add Authelia middlewares to protect login
+      - "traefik.http.routers.registry-secured.service=registry-service"         #<== Set service
+      - "traefik.http.services.registry-service.loadbalancer.server.port=5000"    #<== Set target port on container
+
+networks:
+  proxy:
+    external: true
