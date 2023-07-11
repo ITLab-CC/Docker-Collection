@@ -12,25 +12,8 @@ services:
     ports:
       - "80:80"   # <== http
       - "443:443" # <== https
-
-      # #DNS Pihole
-      # - "853:853"       #<== TCP DNS over TLS
-      # - "853:853/udp"   #<== UDP DNS over TLS: Traefik does not support it yet
-      # #- "53:53"        #<== TCP DNS (dont use it on a public server, if you dont have protection against misuse )
-      # #- "53:53/udp"    #<== TCP DNS (dont use it on a public server, if you dont have protection against misuse )
-
-      # #Mail
-      # - "25:25"      #<== smtp
-      # - "465:465"    #<== smtp with ssl
-      # - "587:587"    #<== default smtp with TLS
-      # #- "110:110"   #<== POP3
-      # - "995:995"    #<== POP3s
-      # #- "143:143"   #<== IMAP
-      # - "993:993"    #<== IMAPs
-      # #- "2525:2525" #<== smtp with TLS
     command:
       #### These are the CLI commands that will configure Traefik and tell it how to work! ####
-      - --pilot.token=${Traefik_Pilot_Token}        #<== Traefik Token (not necessary). (You can register your instance here: https://pilot.traefik.io/instances)
       #- --api.insecure=true                        #<== Enabling insecure api, NOT RECOMMENDED FOR PRODUCTION
       - --api.dashboard=true                        #<== Enabling the dashboard to view services, middlewares, routers, etc...
       #- --api.debug=true                           #<== Enabling additional endpoints for debugging and profiling
@@ -69,24 +52,6 @@ services:
       #https
       - --entrypoints.websecure.address=:443                              #<== Defining an entrypoint for https on port :443 named websecure
       - --entrypoints.websecure.http.middlewares=crowdsec-bouncer-traefik #<== Add Crowdsec all middleware
-
-
-      # #Pihole DNS
-      # - "--entrypoints.dns-tls.address=:853"
-      # - "--entrypoints.dns-tls-udp.address=:853/udp"
-      # #- "--entrypoints.dns.address=:53"
-      # #- "--entrypoints.dns-udp.address=:53/udp"
-
-
-      # #Mail (mailu cares about the SSL certificate. Dont use websecure! Have a look on "mailu-certdumper")
-      # - "--entrypoints.smtp-465.address=:465"    #<== smtp with ssl
-      # - "--entrypoints.smtp-587.address=:587"    #<== default smtp with TLS
-      # #- "--entrypoints.smtp-2525.address=:2525" #<== smtp with TLS
-      # - "--entrypoints.smtp-25.address=:25"      #<== smtp
-      # #- "--entrypoints.pop-110.address=:110"    #<== POP3
-      # - "--entrypoints.pop-995.address=:995"     #<== POP3
-      # #- "--entrypoints.imap-143.address=:143"   #<== IMAP
-      # - "--entrypoints.imap-993.address=:993"    #<== IMAP
     environment:
       - CF_API_EMAIL=${Cloudflare_Email}                #<== Email from Cloudflair
       - CF_DNS_API_TOKEN=${Cloudflare_API_Traefik_Token} #<== API token https://dash.cloudflare.com/profile/api-tokens (Zone/Zone/Read and Zone/DNS/Edit) docs: https://go-acme.github.io/lego/dns/cloudflare/#api-tokens
@@ -241,18 +206,18 @@ services:
     depends_on:
       - proxy-crowdsec
 
-  # This is the bouncer with wich cloudflare and crowdsec are communicating.
-  proxy-bouncer-cloudflare:
-    image: crowdsecurity/cloudflare-bouncer:latest
-    container_name: proxy-bouncer-cloudflare
-    restart: unless-stopped
-    networks:
-      - proxy-backend #<== same network as crowdsec
-    depends_on:
-      - proxy-crowdsec
-    volumes:
-      - ./data/crowdsecurity/bouncer/cloudflare/cfg.yaml:/etc/crowdsec/bouncers/crowdsec-cloudflare-bouncer.yaml                                #<== This is the config for the cloudflare bouncer. This file must exist. Outherwise docker will create a folder.
-      - ./data/crowdsecurity/bouncer/cloudflare/cloudflare-cache.json:/var/lib/crowdsec/crowdsec-cloudflare-bouncer/cache/cloudflare-cache.json #<== This file must exist. Outherwise docker will create a folder. At the beginning the file has to be empty.
+  # # This is the bouncer with wich cloudflare and crowdsec are communicating.
+  # proxy-bouncer-cloudflare:
+  #   image: crowdsecurity/cloudflare-bouncer:latest
+  #   container_name: proxy-bouncer-cloudflare
+  #   restart: unless-stopped
+  #   networks:
+  #     - proxy-backend #<== same network as crowdsec
+  #   depends_on:
+  #     - proxy-crowdsec
+  #   volumes:
+  #     - ./data/crowdsecurity/bouncer/cloudflare/cfg.yaml:/etc/crowdsec/bouncers/crowdsec-cloudflare-bouncer.yaml                                #<== This is the config for the cloudflare bouncer. This file must exist. Outherwise docker will create a folder.
+  #     - ./data/crowdsecurity/bouncer/cloudflare/cloudflare-cache.json:/var/lib/crowdsec/crowdsec-cloudflare-bouncer/cache/cloudflare-cache.json #<== This file must exist. Outherwise docker will create a folder. At the beginning the file has to be empty.
 
 
 

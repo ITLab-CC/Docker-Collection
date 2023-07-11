@@ -1,0 +1,68 @@
+version: "3.3"
+
+services:
+  ###############################################
+  ####             cicnet                #####
+  ###############################################
+  wordpress-cicnet:
+    image: wordpress:latest
+    container_name: wordpress-cicnet
+    depends_on:
+      - wordpress-db-cicnet
+    restart: unless-stopped
+    environment:
+      WORDPRESS_DB_HOST: ${WORDPRESS_DB_HOST}
+      WORDPRESS_DB_USER: ${WORDPRESS_DB_USER}
+      WORDPRESS_DB_PASSWORD: ${WORDPRESS_DB_PASSWORD}
+    volumes:
+      - ./data/wordpress:/var/www/html/
+    networks:
+      - proxy
+      - cicnet_backend
+    labels:
+      - "traefik.enable=true"                                                  #<== Enable traefik
+      - "traefik.http.routers.cicnet-secured.rule=Host(`cicnet.${DOMAIN}`)"  #<== Set domain
+      - "traefik.http.routers.cicnet-secured.entrypoints=websecure"           #<== Set entry point for HTTPS
+      - "traefik.http.routers.cicnet-secured.tls.certresolver=mytlschallenge" #<== Set certsresolvers for https
+      - "traefik.http.routers.cicnet-secured.middlewares=authelia"            #<== Add Authelia middlewares to protect login
+      - "traefik.http.routers.cicnet-secured.service=cicnet-service"         #<== Set service
+      - "traefik.http.services.cicnet-service.loadbalancer.server.port=80"    #<== Set target port on container
+
+  wordpress-db-cicnet:
+    container_name: wordpress-db-cicnet
+    platform: linux/x86_64
+    image: mysql:5.7
+    volumes:
+      - ./data/data_db:/var/lib/mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: mypassword
+      MYSQL_DATABASE: wordpress
+      MYSQL_USER: ${WORDPRESS_DB_USER}
+      MYSQL_PASSWORD: ${WORDPRESS_DB_PASSWORD}
+    networks:
+      - cicnet_backend
+
+  phpmyadmin:
+    image: phpmyadmin
+    restart: unless-stopped
+    # ports:
+    #   - 1000:80
+    environment:
+       - PMA_ARBITRARY=1
+    networks:
+      - proxy
+      - cicnet_backend
+    labels:
+      - "traefik.enable=true"                                                  #<== Enable traefik
+      - "traefik.http.routers.cicnet2-secured.rule=Host(`cicnet-phpmyadmin.${DOMAIN}`)"  #<== Set domain
+      - "traefik.http.routers.cicnet2-secured.entrypoints=websecure"           #<== Set entry point for HTTPS
+      - "traefik.http.routers.cicnet2-secured.tls.certresolver=mytlschallenge" #<== Set certsresolvers for https
+      - "traefik.http.routers.cicnet2-secured.middlewares=authelia"            #<== Add Authelia middlewares to protect login
+      - "traefik.http.routers.cicnet2-secured.service=cicnet2-service"         #<== Set service
+      - "traefik.http.services.cicnet2-service.loadbalancer.server.port=80"    #<== Set target port on container
+
+networks:
+  proxy:
+    external: true
+  cicnet_backend:
