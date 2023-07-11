@@ -3,3 +3,4 @@
 /global.env.temp
 /docker-compose.dflt.yml
 financial/.env
+crater/*
