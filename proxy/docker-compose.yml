@@ -241,18 +241,19 @@ services:
     depends_on:
       - proxy-crowdsec
 
-  # This is the bouncer with wich cloudflare and crowdsec are communicating.
-  proxy-bouncer-cloudflare:
-    image: crowdsecurity/cloudflare-bouncer:latest
-    container_name: proxy-bouncer-cloudflare
-    restart: unless-stopped
-    networks:
-      - proxy-backend #<== same network as crowdsec
-    depends_on:
-      - proxy-crowdsec
-    volumes:
-      - ./data/crowdsecurity/bouncer/cloudflare/cfg.yaml:/etc/crowdsec/bouncers/crowdsec-cloudflare-bouncer.yaml                                #<== This is the config for the cloudflare bouncer. This file must exist. Outherwise docker will create a folder.
-      - ./data/crowdsecurity/bouncer/cloudflare/cloudflare-cache.json:/var/lib/crowdsec/crowdsec-cloudflare-bouncer/cache/cloudflare-cache.json #<== This file must exist. Outherwise docker will create a folder. At the beginning the file has to be empty.
+  # # This is the bouncer with wich cloudflare and crowdsec are communicating.
+  # # It only works if you have a cloudflare paid plan
+  # proxy-bouncer-cloudflare:
+  #   image: crowdsecurity/cloudflare-bouncer:latest
+  #   container_name: proxy-bouncer-cloudflare
+  #   restart: unless-stopped
+  #   networks:
+  #     - proxy-backend #<== same network as crowdsec
+  #   depends_on:
+  #     - proxy-crowdsec
+  #   volumes:
+  #     - ./data/crowdsecurity/bouncer/cloudflare/cfg.yaml:/etc/crowdsec/bouncers/crowdsec-cloudflare-bouncer.yaml                                #<== This is the config for the cloudflare bouncer. This file must exist. Outherwise docker will create a folder.
+  #     - ./data/crowdsecurity/bouncer/cloudflare/cloudflare-cache.json:/var/lib/crowdsec/crowdsec-cloudflare-bouncer/cache/cloudflare-cache.json #<== This file must exist. Outherwise docker will create a folder. At the beginning the file has to be empty.
 
 
 
