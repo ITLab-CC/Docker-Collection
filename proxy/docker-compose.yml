@@ -207,6 +207,7 @@ services:
       - proxy-crowdsec
 
   # # This is the bouncer with wich cloudflare and crowdsec are communicating.
+  # # It only works if you have a cloudflare paid plan
   # proxy-bouncer-cloudflare:
   #   image: crowdsecurity/cloudflare-bouncer:latest
   #   container_name: proxy-bouncer-cloudflare
