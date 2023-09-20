@@ -12,6 +12,72 @@
   ],
   "apps": [
     {
+      "id": "47af36c0-47c1-4e5b-bfc7-ad645ee6a337",
+      "name": "Discord",
+      "url": "https://discord.com/invite/aCsmEV5RgA",
+      "behaviour": {
+        "onClickUrl": "https://discord.com/invite/aCsmEV5RgA",
+        "isOpeningNewTab": true,
+        "externalUrl": "https://discord.com/invite/aCsmEV5RgA",
+        "tooltipDescription": "Join our Discord server! We're waiting for your ideas and feedback. "
+      },
+      "network": {
+        "enabledStatusChecker": false,
+        "statusCodes": [
+          "200"
+        ]
+      },
+      "appearance": {
+        "iconUrl": "https://cdn.jsdelivr.net/gh/walkxcode/dashboard-icons@master/png/discord.png",
+        "appNameStatus": "normal",
+        "positionAppName": "row-reverse",
+        "lineClampAppName": 1,
+        "appNameFontSize": 16
+      },
+      "integration": {
+        "type": null,
+        "properties": []
+      },
+      "area": {
+        "type": "wrapper",
+        "properties": {
+          "id": "default"
+        }
+      },
+      "shape": {
+        "md": {
+          "location": {
+            "x": 3,
+            "y": 1
+          },
+          "size": {
+            "width": 1,
+            "height": 1
+          }
+        },
+        "sm": {
+          "location": {
+            "x": 1,
+            "y": 4
+          },
+          "size": {
+            "width": 1,
+            "height": 1
+          }
+        },
+        "lg": {
+          "location": {
+            "x": 4,
+            "y": 0
+          },
+          "size": {
+            "width": 2,
+            "height": 1
+          }
+        }
+      }
+    },
+    {
       "id": "47af36c0-47c1-4e5b-bfc7-ad645ee6a330",
       "name": "Contribute",
       "url": "https://github.com/ajnart/homarr",
@@ -142,6 +208,55 @@
       }
     },
     {
+      "id": "d8550e8d-eae7-462d-a627-07c7551edb05",
+      "name": "Portainer",
+      "url": "https://portainer.criation.de/",
+      "appearance": {
+        "iconUrl": "/imgs/logo/portainer.png",
+        "appNameStatus": "normal",
+        "appNameFontSize": 16,
+        "positionAppName": "column",
+        "lineClampAppName": 1
+      },
+      "network": {
+        "enabledStatusChecker": true,
+        "statusCodes": [
+          "200",
+          "301",
+          "302",
+          "304",
+          "307",
+          "308"
+        ]
+      },
+      "behaviour": {
+        "isOpeningNewTab": true,
+        "externalUrl": "https://portainer.criation.de/"
+      },
+      "area": {
+        "type": "wrapper",
+        "properties": {
+          "id": "default"
+        }
+      },
+      "shape": {
+        "lg": {
+          "location": {
+            "x": 0,
+            "y": 1
+          },
+          "size": {
+            "width": 1,
+            "height": 1
+          }
+        }
+      },
+      "integration": {
+        "type": null,
+        "properties": []
+      }
+    },
+    {
       "id": "5df743d9-5cb1-457c-85d2-64ff86855652",
       "name": "Documentation",
       "url": "https://homarr.dev",
@@ -202,72 +317,6 @@
           "size": {
             "width": 2,
             "height": 2
-          }
-        }
-      }
-    },
-    {
-      "id": "47af36c0-47c1-4e5b-bfc7-ad645ee6a337",
-      "name": "Discord",
-      "url": "https://discord.com/invite/aCsmEV5RgA",
-      "behaviour": {
-        "onClickUrl": "https://discord.com/invite/aCsmEV5RgA",
-        "isOpeningNewTab": true,
-        "externalUrl": "https://discord.com/invite/aCsmEV5RgA",
-        "tooltipDescription": "Join our Discord server! We're waiting for your ideas and feedback. "
-      },
-      "network": {
-        "enabledStatusChecker": false,
-        "statusCodes": [
-          "200"
-        ]
-      },
-      "appearance": {
-        "iconUrl": "https://cdn.jsdelivr.net/gh/walkxcode/dashboard-icons@master/png/discord.png",
-        "appNameStatus": "normal",
-        "positionAppName": "row-reverse",
-        "lineClampAppName": 1,
-        "appNameFontSize": 16
-      },
-      "integration": {
-        "type": null,
-        "properties": []
-      },
-      "area": {
-        "type": "wrapper",
-        "properties": {
-          "id": "default"
-        }
-      },
-      "shape": {
-        "md": {
-          "location": {
-            "x": 3,
-            "y": 1
-          },
-          "size": {
-            "width": 1,
-            "height": 1
-          }
-        },
-        "sm": {
-          "location": {
-            "x": 1,
-            "y": 4
-          },
-          "size": {
-            "width": 1,
-            "height": 1
-          }
-        },
-        "lg": {
-          "location": {
-            "x": 4,
-            "y": 0
-          },
-          "size": {
-            "width": 2,
-            "height": 1
           }
         }
       }

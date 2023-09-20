@@ -3,4 +3,7 @@
 /global.env.temp
 /docker-compose.dflt.yml
 financial/.env
+homarr/.env
 crater/*
+*/.env
+.env
