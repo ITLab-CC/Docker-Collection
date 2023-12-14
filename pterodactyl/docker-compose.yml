@@ -1,0 +1,161 @@
+#Create User: docker-compose run --rm pterodactyl-panel php artisan p:user:mak
+
+version: '3.8'
+x-common:
+  database:
+    &db-environment
+    # Do not remove the "&db-password" from the end of the line below, it is important
+    # for Panel functionality.
+    MYSQL_PASSWORD: &db-password ${Password}
+    MYSQL_ROOT_PASSWORD: ${Password}
+  panel:
+    &panel-environment
+    APP_URL: "https://game.${DOMAIN}"
+    # A list of valid timezones can be found here: http://php.net/manual/en/timezones.php
+    APP_TIMEZONE: ${TimeZone}
+    APP_SERVICE_AUTHOR: "${Email}"
+    TRUSTED_PROXIES: "*" #add from TechnoTim for Proxy
+    # Uncomment the line below and set to a non-empty value if you want to use Let's Encrypt
+    # to generate an SSL certificate for the Panel.
+    # LE_EMAIL: ""
+  mail:
+    &mail-environment
+    MAIL_FROM: "${Email}"
+    MAIL_DRIVER: "smtp"
+    MAIL_HOST: "mail.${DOMAIN}"
+    MAIL_PORT: "465"
+    MAIL_USERNAME: "${Email}"
+    MAIL_PASSWORD: "${EmailPassword}"
+    MAIL_ENCRYPTION: "true"
+
+#
+# ------------------------------------------------------------------------------------------
+# DANGER ZONE BELOW
+#
+# The remainder of this file likely does not need to be changed. Please only make modifications
+# below if you understand what you are doing.
+#
+services:
+  pterodactyl-database:
+    image: mariadb:10.5
+    container_name: pterodactyl-database
+    restart: unless-stopped
+    command: --default-authentication-plugin=mysql_native_password
+    volumes:
+      - "./data/database:/var/lib/mysql"
+    environment:
+      <<: *db-environment
+      MYSQL_DATABASE: "panel"
+      MYSQL_USER: "pterodactyl"
+    networks:
+      - pterodactyl
+
+  pterodactyl-cache:
+    image: redis:alpine
+    container_name: pterodactyl-cache
+    restart: unless-stopped
+    networks:
+      - pterodactyl
+
+    
+  pterodactyl-panel:
+    image: ghcr.io/pterodactyl/panel:latest
+    container_name: pterodactyl-panel
+    restart: unless-stopped
+    # ports:
+      # - "80:80"
+      # - "443:443"
+    links:
+      - pterodactyl-database
+      - pterodactyl-cache
+    networks:
+      - pterodactyl
+      - proxy
+    volumes:
+      - "./data/panel/var/:/app/var/"
+      - "./data/panel/nginx/:/etc/nginx/http.d/"
+      - "./data/panel/certs/:/etc/letsencrypt/"
+      - "./data/panel/logs/:/app/storage/logs"
+    environment:
+      <<: [*panel-environment, *mail-environment]
+      DB_PASSWORD: *db-password
+      APP_ENV: "production"
+      APP_ENVIRONMENT_ONLY: "false"
+      CACHE_DRIVER: "redis"
+      SESSION_DRIVER: "redis"
+      QUEUE_DRIVER: "redis"
+      REDIS_HOST: "pterodactyl-cache"
+      DB_HOST: "pterodactyl-database"
+      DB_PORT: "3306"
+      TRUSTED_PROXIES: "*"
+    labels:
+      - "traefik.enable=true"                                                      #<== Enable traefik
+      - "traefik.http.routers.pterodactyl-secured.rule=Host(`game.${DOMAIN}`)"     #<== Set domain
+      - "traefik.http.routers.pterodactyl-secured.entrypoints=websecure"           #<== Set entry point for HTTPS
+      - "traefik.http.routers.pterodactyl-secured.tls.certresolver=mytlschallenge" #<== Set certsresolvers for https
+      # - "traefik.http.routers.pterodactyl-secured.middlewares=authelia"            #<== Add Authelia middlewares to protect login
+      - "traefik.http.routers.pterodactyl-secured.service=pterodactyl-service"     #<== Set service
+      - "traefik.http.services.pterodactyl-service.loadbalancer.server.port=80"    #<== Set target port on container
+
+
+
+  pterodactyl-wings:
+    image: ghcr.io/pterodactyl/wings:latest
+    container_name: pterodactyl-wings
+    restart: unless-stopped
+    networks:
+      - pterodactyl
+      - wings0
+      - proxy
+    ports:
+      - "127.0.0.1:2022:2022"
+      # - "8080:8080"
+      # - "2022:2022"
+    tty: true
+    environment:
+      TZ: ${TimeZone}
+      WINGS_UID: 988
+      WINGS_GID: 988
+      WINGS_USERNAME: pterodactyl
+    volumes:
+      - "/var/run/docker.sock:/var/run/docker.sock"
+      # - "/var/lib/docker/containers/:/var/lib/docker/containers/"
+      - "/var/lib/docker/:/var/lib/docker"
+      - "./data/wings/:/etc/pterodactyl/"
+      - "/var/lib/pterodactyl/:/var/lib/pterodactyl/"
+      - "/var/log/pterodactyl/:/var/log/pterodactyl/"
+      - "/tmp/pterodactyl/:/tmp/pterodactyl/"
+      - "/etc/ssl/certs:/etc/ssl/certs:ro"
+      # you may need /srv/daemon-data if you are upgrading from an old daemon
+      #- "/srv/daemon-data/:/srv/daemon-data/"
+      # Required for ssl if you use let's encrypt. uncomment to use.
+      #- "/etc/letsencrypt/:/etc/letsencrypt/"
+    labels:
+      - "traefik.enable=true"                                                 #<== Enable traefik
+      - "traefik.http.routers.wings-secured.rule=Host(`wing.game.${DOMAIN}`)" #<== Set domain
+      - "traefik.http.routers.wings-secured.entrypoints=websecure"            #<== Set entry point for HTTPS
+      - "traefik.http.routers.wings-secured.tls.certresolver=mytlschallenge"  #<== Set certsresolvers for https
+      # - "traefik.http.routers.wings-secured.middlewares=authelia"             #<== Add Authelia middlewares to protect login
+      - "traefik.http.routers.wings-secured.service=wings-service"            #<== Set service
+      - "traefik.http.services.wings-service.loadbalancer.server.port=443"    #<== Set target port on container
+
+
+
+
+networks:
+  proxy:
+    external: true
+  pterodactyl:
+    name: pterodactyl
+    driver: bridge
+    # ipam:
+    #   config:
+    #     - subnet: 172.20.0.0/16
+  wings0:
+    name: wings0
+    driver: bridge
+    ipam:
+      config:
+        - subnet: "172.21.0.0/16"
+    driver_opts:
+      com.docker.network.bridge.name: wings0
