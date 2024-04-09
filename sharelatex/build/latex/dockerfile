@@ -1,0 +1,5 @@
+FROM sharelatex/sharelatex:latest
+RUN wget https://mirror.physik.tu-berlin.de/pub/CTAN/systems/texlive/tlnet/update-tlmgr-latest.sh && chmod +x update-tlmgr-latest.sh && ./update-tlmgr-latest.sh
+RUN tlmgr update --self --all
+RUN luaotfload-tool -fu
+RUN tlmgr install scheme-full

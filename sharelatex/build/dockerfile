@@ -1,6 +1,0 @@
-FROM sharelatex/sharelatex:latest
-RUN tlmgr path remove
-RUN wget https://mirror.ctan.org/systems/texlive/tlnet/update-tlmgr-latest.sh && chmod +x update-tlmgr-latest.sh && ./update-tlmgr-latest.sh
-RUN tlmgr update --self --all
-RUN luaotfload-tool -fu
-RUN tlmgr install scheme-full
