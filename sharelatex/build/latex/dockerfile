@@ -1,0 +1,12 @@
+FROM sharelatex/sharelatex:latest
+RUN cd /tmp && wget https://mirror.ctan.org/systems/texlive/tlnet/install-tl-unx.tar.gz && zcat < install-tl-unx.tar.gz | tar xf -
+RUN cd /tmp/install-tl-* && perl ./install-tl --no-interaction
+# RUN /usr/local/texlive/2024/bin/x86_64-linux
+RUN tlmgr path add
+
+
+# RUN tlmgr path remove
+# RUN wget https://mirror.physik.tu-berlin.de/pub/CTAN/systems/texlive/tlnet/update-tlmgr-latest.sh && chmod +x update-tlmgr-latest.sh && ./update-tlmgr-latest.sh
+# RUN tlmgr update --self --all
+# RUN luaotfload-tool -fu
+# RUN tlmgr install scheme-full

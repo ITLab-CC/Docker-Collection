@@ -1,127 +1,101 @@
-version: "3.3"
+version: '3.3'
 
 services:
-  ###############################################
-  ####              sharelatex              #####
-  ###############################################
-  sharelatex:
-    # Server Pro users:
-    # image: quay.io/sharelatex/sharelatex-pro
-    # Server with a minimal install of TeXLive:
-    # image: sharelatex/sharelatex:with-texlive-full
-    # Server with full install of TeXLive:
-    build: ./build
-    container_name: sharelatex
-    restart: unless-stopped
-    volumes:
-      - ./data/sharelatex:/var/lib/sharelatex
-      # Server Pro: Uncomment the following line to mount the docker socket, required for Sibling Containers to work
-      # - /var/run/docker.sock:/var/run/docker.sock
-    depends_on:
-        sharelatex-mongo:
-            condition: service_healthy
-        sharelatex-redis:
-            condition: service_started
-    links:
-        - sharelatex-mongo
-        - sharelatex-redis
-    environment:
-      SHARELATEX_APP_NAME: Overleaf Community Edition
+    sharelatex:
+        restart: always
+        # Server Pro users:
+        # image: quay.io/sharelatex/sharelatex-pro
+        image: sharelatex/sharelatex
+        # build: ./build/latex
+        container_name: sharelatex
+        depends_on:
+            mongo:
+                condition: service_healthy
+            redis:
+                condition: service_started
+        links:
+            - mongo
+            - redis
+        # ports:
+        #   - 4555:80
+        expose:
+            - 80
+        volumes:
+            - ./data/sharelatex:/var/lib/overleaf
+            ########################################################################
+            ####  Server Pro: Un-comment the following line to mount the docker ####
+            ####             socket, required for Sibling Containers to work    ####
+            ########################################################################
+            # - /var/run/docker.sock:/var/run/docker.sock
+        environment:
+            OVERLEAF_APP_NAME: Overleaf Workspace # change to custom name
 
-      SHARELATEX_MONGO_URL: mongodb://sharelatex-mongo/sharelatex
+            OVERLEAF_MONGO_URL: mongodb://mongo/sharelatex?replicaSet=rs0
 
-      SHARELATEX_REDIS_HOST: sharelatex-redis
-      REDIS_HOST: sharelatex-redis
+            # Same property, unfortunately with different names in
+            # different locations
+            OVERLEAF_REDIS_HOST: redis
+            REDIS_HOST: redis
 
-      ENABLED_LINKED_FILE_TYPES: 'url,project_file'
+            ENABLED_LINKED_FILE_TYPES: "url,project_file"
 
-      # Enables Thumbnail generation using ImageMagick
-      ENABLE_CONVERSIONS: 'true'
+            # Enables Thumbnail generation using ImageMagick
+            ENABLE_CONVERSIONS: "true"
 
-      # Disables email confirmation requirement
-      EMAIL_CONFIRMATION_DISABLED: 'true'
+            # Disables email confirmation requirement
+            EMAIL_CONFIRMATION_DISABLED: "true"
 
-      # temporary fix for LuaLaTex compiles
-      # see https://github.com/overleaf/overleaf/issues/695
-      TEXMFVAR: /var/lib/sharelatex/tmp/texmf-var
+            # temporary fix for LuaLaTex compiles
+            # see https://github.com/overleaf/overleaf/issues/695
+            TEXMFVAR: /var/lib/sharelatex/tmp/texmf-var
 
-      ## Set for SSL via nginx-proxy
-      #VIRTUAL_HOST: 103.112.212.22
+            OVERLEAF_EMAIL_FROM_ADDRESS: "postmaster@test.com" # change email
 
-      SHARELATEX_SITE_URL: 'https://latex.${DOMAIN}'
-      # SHARELATEX_SECURE_COOKIE: 'true'
-      SHARELATEX_BEHIND_PROXY: 'true'
-      # SHARELATEX_NAV_TITLE: Our ShareLaTeX Instance
-      # SHARELATEX_HEADER_IMAGE_URL: http://somewhere.com/mylogo.png
-      # SHARELATEX_ADMIN_EMAIL: support@it.com
+        networks:
+            - proxy
+            - sharelatex-backend
+        labels:
+            - "traefik.enable=true" #<== Enable traefik
+            - "traefik.http.routers.sharelatex-secured.rule=Host(`latex.${DOMAIN}`)" #<== Set domain
+            - "traefik.http.routers.sharelatex-secured.entrypoints=websecure" #<== Set entry point for HTTPS
+            - "traefik.http.routers.sharelatex-secured.tls.certresolver=mytlschallenge" #<== Set certsresolvers for https
+            - "traefik.http.routers.sharelatex-secured.middlewares=authelia" #<== Add Authelia middlewares to protect login
+            - "traefik.http.routers.sharelatex-secured.service=sharelatex-service" #<== Set service
+            - "traefik.http.services.sharelatex-service.loadbalancer.server.port=80" #<== Set target port on container
 
-      # SHARELATEX_LEFT_FOOTER: '[{"text": "Powered by <a href=\"https://www.sharelatex.com\">ShareLaTeX</a> 2016"},{"text": "Another page I want to link to can be found <a href=\"here\">here</a>"} ]'
-      # SHARELATEX_RIGHT_FOOTER: '[{"text": "Hello I am on the Right"} ]'
+    mongo:
+        restart: always
+        # image: mongo:5.0
+        build: ./build/mongo
+        container_name: mongo
+        command: --replSet rs0
+        expose:
+            - 27017
+        volumes:
+            - ./data/mongo:/data/db
+        healthcheck:
+            test: echo 'db.stats().ok' | mongo localhost:27017/test --quiet
+            interval: 10s
+            timeout: 10s
+            retries: 5
+        networks:
+            - sharelatex-backend
 
-      # SHARELATEX_EMAIL_FROM_ADDRESS: '$EMAIL_SMTP_USER'
-      # SHARELATEX_EMAIL_REPLY_TO: '$EMAIL_SMTP_USER'
 
-      # SHARELATEX_EMAIL_AWS_SES_ACCESS_KEY_ID:
-      # SHARELATEX_EMAIL_AWS_SES_SECRET_KEY:
-
-      #https://github.com/overleaf/overleaf/wiki/Configuring-SMTP-Email
-      SHARELATEX_EMAIL_SMTP_HOST: '${EMAIL_SMTP_HOST}'
-      SHARELATEX_EMAIL_SMTP_PORT: '${EMAIL_SMTP_PORT}'
-      SHARELATEX_EMAIL_SMTP_SECURE: 'false'
-      SHARELATEX_EMAIL_SMTP_USER: '${EMAIL_SMTP_USER}'
-      SHARELATEX_EMAIL_SMTP_PASS: '${EMAIL_SMTP_PASS}'
-      SHARELATEX_EMAIL_SMTP_TLS_REJECT_UNAUTH: 'false'
-      SHARELATEX_EMAIL_SMTP_IGNORE_TLS: 'false'
-      SHARELATEX_EMAIL_SMTP_NAME: '127.0.0.1'
-      SHARELATEX_EMAIL_SMTP_LOGGER: 'false'
-      SHARELATEX_CUSTOM_EMAIL_FOOTER: "This system is run by department ${DOMAIN}"
-    networks:
-      - proxy
-      - sharelatex-backend
-    labels:
-      - "traefik.enable=true"                                                     #<== Enable traefik
-      - "traefik.http.routers.sharelatex-secured.rule=Host(`latex.${DOMAIN}`)"    #<== Set domain
-      - "traefik.http.routers.sharelatex-secured.entrypoints=websecure"           #<== Set entry point for HTTPS
-      - "traefik.http.routers.sharelatex-secured.tls.certresolver=mytlschallenge" #<== Set certsresolvers for https
-      - "traefik.http.routers.sharelatex-secured.middlewares=authelia"            #<== Add Authelia middlewares to protect login
-      - "traefik.http.routers.sharelatex-secured.service=sharelatex-service"      #<== Set service
-      - "traefik.http.services.sharelatex-service.loadbalancer.server.port=80"    #<== Set target port on container
-
-  sharelatex-mongo:
-    image: mongo:4.0
-    container_name: sharelatex-mongo
-    restart: unless-stopped
-    command: --replSet rs0
-    volumes:
-      - ./data/mongo:/data/db
-    healthcheck:
-      test: echo 'db.stats().ok' | mongo localhost:27017/test --quiet
-      interval: 10s
-      timeout: 10s
-      retries: 5
-    expose:
-      - 27017
-    networks:
-      - sharelatex-backend
-    labels:
-      - "com.centurylinklabs.watchtower.enable=false"
-
-  sharelatex-redis:
-    image: redis:5
-    container_name: sharelatex-redis
-    restart: unless-stopped
-    volumes:
-      - ./data/redis:/data
-    expose:
-      - 6379
-    networks:
-      - sharelatex-backend
-    labels:
-      - "com.centurylinklabs.watchtower.enable=false"
+    redis:
+        restart: always
+        image: redis:6.2
+        container_name: redis
+        expose:
+            - 6379
+        volumes:
+            - ./data/redis:/data
+        networks:
+            - sharelatex-backend
 
 networks:
-  proxy:
-    external: true
-  sharelatex-backend:
-    name: sharelatex-backend
-    driver: bridge
+    proxy:
+        external: true
+    sharelatex-backend:
+        name: sharelatex-backend
+        driver: bridge

@@ -1,0 +1,11 @@
+FROM mongo:5.0
+
+# Copy the JavaScript and shell scripts to the image
+COPY mongo-init-replica.js /docker-entrypoint-initdb.d/mongo-init-replica.js
+COPY init-replica.sh /docker-entrypoint-initdb.d/init-replica.sh
+
+# Make the shell script executable
+RUN chmod +x /docker-entrypoint-initdb.d/init-replica.sh
+
+# Use the shell script as the entrypoint
+ENTRYPOINT ["/docker-entrypoint-initdb.d/init-replica.sh"]
