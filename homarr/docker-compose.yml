@@ -1,0 +1,29 @@
+version: '3'
+#---------------------------------------------------------------------#
+#     Homarr - A simple, yet powerful dashboard for your server.     #
+#---------------------------------------------------------------------#
+services:
+  homarr:
+    container_name: homarr
+    image: ghcr.io/ajnart/homarr:latest
+    restart: unless-stopped
+    volumes:
+      - ./data/configs:/app/data/configs
+      - ./data/icons:/app/public/icons
+      - ./data/data:/data
+    #ports:
+    #  - '7575:7575'
+    networks:
+      - proxy
+    labels:
+      - "traefik.enable=true"                                                       #<== Enable traefik
+      - "traefik.http.routers.homarr-secured.rule=Host(`homarr.${DOMAIN}`)"    #<== Set domain
+      - "traefik.http.routers.homarr-secured.entrypoints=websecure"            #<== Set entry point for HTTPS
+      - "traefik.http.routers.homarr-secured.tls.certresolver=mytlschallenge"  #<== Set certsresolvers for https
+      - "traefik.http.routers.homarr-secured.middlewares=authelia"             #<== Add Authelia middlewares to protect login
+      - "traefik.http.routers.homarr-secured.service=homarr-service"      #<== Set service
+      - "traefik.http.services.homarr-service.loadbalancer.server.port=7575"     #<== Set target port on container
+
+networks:
+  proxy:
+    external: true
