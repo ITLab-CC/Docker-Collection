@@ -17,7 +17,7 @@ services:
       - OVERWRITECLIURL=cloud.${DOMAIN}
       - OVERWRITEPROTOCOL=https
     volumes:
-      - ./data:/var/www/html
+      - ./data/cloud:/var/www/html
     restart: unless-stopped
     networks:
       - proxy
@@ -51,7 +51,7 @@ services:
       --transaction-isolation=READ-COMMITTED 
       --binlog-format=ROW 
     volumes:
-      - ./db:/var/lib/mysql
+      - ./data/db:/var/lib/mysql
     environment:
       - MYSQL_ROOT_PASSWORD=${Password}
       - MYSQL_PASSWORD=${Password}
@@ -63,10 +63,5 @@ networks:
   nextcloud:
     name: nextcloud
     driver: bridge
-    ipam:
-      driver: default
-      config:
-        - subnet: 172.4.0.0/16
-
   proxy:
     external: true
