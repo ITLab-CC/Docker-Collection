@@ -45,8 +45,7 @@ services:
     container_name: nextcloud-mariadb
     restart: unless-stopped
     networks:
-      nextcloud:
-        ipv4_address: 172.4.0.20
+      - nextcloud
     command: 
       --transaction-isolation=READ-COMMITTED 
       --binlog-format=ROW 
