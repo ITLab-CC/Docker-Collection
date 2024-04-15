@@ -12,7 +12,7 @@ services:
       - MYSQL_PASSWORD=${Password}
       - MYSQL_DATABASE=nextcloud
       - MYSQL_USER=nextcloud
-      - MYSQL_HOST=172.4.0.20
+      - MYSQL_HOST=nextcloud-mariadb
       - TIMEZONE=${TimeZone}
       - OVERWRITECLIURL=cloud.${DOMAIN}
       - OVERWRITEPROTOCOL=https
