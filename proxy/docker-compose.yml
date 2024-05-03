@@ -30,7 +30,6 @@ services:
       # #- "2525:2525" #<== smtp with TLS
     command:
       #### These are the CLI commands that will configure Traefik and tell it how to work! ####
-      - --pilot.token=${Traefik_Pilot_Token}        #<== Traefik Token (not necessary). (You can register your instance here: https://pilot.traefik.io/instances)
       #- --api.insecure=true                        #<== Enabling insecure api, NOT RECOMMENDED FOR PRODUCTION
       - --api.dashboard=true                        #<== Enabling the dashboard to view services, middlewares, routers, etc...
       #- --api.debug=true                           #<== Enabling additional endpoints for debugging and profiling
