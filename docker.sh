@@ -132,7 +132,7 @@ RunStack()
                 cp ".env.tmpl" ".env"
             fi
 
-            docker-compose up -d --remove-orphans
+            docker compose up -d --remove-orphans
             cd ..
         else
             echo "ERROR: \"${STACK}/docker-compose.yml\" not found"
@@ -153,7 +153,7 @@ RunStack()
                         cp ".env.tmpl" ".env"
                     fi
 
-                    docker-compose up -d --remove-orphans --build
+                    docker compose up -d --remove-orphans --build
                     cd ..
                 fi
             fi
@@ -167,7 +167,7 @@ StopStack()
         if [ -f "${STACK}/docker-compose.yml" ]; then
             echo -n "[${STACK}]: ";
             cd ${STACK}
-            docker-compose down --remove-orphans
+            docker compose down --remove-orphans
             cd ..
         else
             echo "ERROR: \"${STACK}/docker-compose.yml\" not found"
@@ -179,7 +179,7 @@ StopStack()
                 if [[ ! " ${StackIgnore[*]} " =~ " ${d} " ]]; then
                     echo -n "[${d}]: ";
                     cd ${d}
-                        docker-compose down --remove-orphans
+                        docker compose down --remove-orphans
                     cd ..
                 fi
             fi
