@@ -1,0 +1,26 @@
+version: "3.3"
+
+services:
+  ###############################################
+  ####              n8n                 #####
+  ###############################################
+  n8n:
+    image: docker.n8n.io/n8nio/n8n
+    container_name: n8n
+    restart: unless-stopped
+    volumes:
+      - ./data:/home/node/.n8n
+    networks:
+      - proxy
+    labels:
+      - "traefik.enable=true"                                                  #<== Enable traefik
+      - "traefik.http.routers.n8n-secured.rule=Host(`n8n.${DOMAIN}`)"      #<== Set domain
+      - "traefik.http.routers.n8n-secured.entrypoints=websecure"           #<== Set entry point for HTTPS
+      - "traefik.http.routers.n8n-secured.tls.certresolver=mytlschallenge" #<== Set certsresolvers for https
+      - "traefik.http.routers.n8n-secured.middlewares=authelia"            #<== Add Authelia middlewares to protect login
+      - "traefik.http.routers.n8n-secured.service=n8n-service"         #<== Set service
+      - "traefik.http.services.n8n-service.loadbalancer.server.port=5678"  #<== Set target port on container
+
+networks:
+  proxy:
+    external: true
