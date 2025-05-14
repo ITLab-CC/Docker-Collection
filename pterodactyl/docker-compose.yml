@@ -1,6 +1,4 @@
 #Create User: docker-compose run --rm pterodactyl-panel php artisan p:user:mak
-
-version: '3.8'
 x-common:
   database:
     &db-environment
