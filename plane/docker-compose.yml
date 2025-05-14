@@ -257,7 +257,7 @@ services:
       - proxy
     labels:
       - "traefik.enable=true"                                                  #<== Enable traefik
-      - "traefik.http.routers.plane-secured.rule=Host(`plane.${APP_DOMAIN}`)"  #<== Set domain
+      - "traefik.http.routers.plane-secured.rule=Host(`plane.${DOMAIN}`)"  #<== Set domain
       - "traefik.http.routers.plane-secured.entrypoints=websecure"           #<== Set entry point for HTTPS
       - "traefik.http.routers.plane-secured.tls.certresolver=mytlschallenge" #<== Set certsresolvers for https
       - "traefik.http.routers.plane-secured.middlewares=authelia"            #<== Add Authelia middlewares to protect login
