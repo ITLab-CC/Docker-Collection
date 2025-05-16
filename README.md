@@ -20,36 +20,11 @@ To add the current user to the Docker group run:
 - `sudo usermod -aG docker ${USER}`
 
 Reboot the server to let the changes take effect.
-### 4. Install Docker-Compose
-Docker-Compose usually gets installed using pip3. For that, we need to have python3 and pip3 installed.
-- `sudo apt-get install libffi-dev libssl-dev -y`
-- `sudo apt install python3-dev -y`
-- `sudo apt-get install python3 python3-pip -y`
 
-Now we can install Docker-Compose.
-- `sudo pip3 install docker-compose`
-
-### 5. Enable Docker to start your containers on boot
+### 4. Enable Docker to start your containers on boot
 
 You can configure your server to automatically run the Docker system service, whenever it boots up.
 - `sudo systemctl enable docker`
-
-### 6. Enable IPv6
-Edit or create this file: `sudo nano /etc/docker/daemon.json`
-```json
-{
-  "ipv6": true,
-  "fixed-cidr-v6": "2001:db8:1::/64",
-  "experimental": true,
-  "ip6tables": true
-}
-```
-Now restart docker with: `sudo service docker restart`
-
-### Test IPv6:
-To test IPv4 and IPv6 you can use thw whoami container (which is in the proxy/docker-compose.yaml file) without a password  protection (no Authelia) and open this webside through this one below:
-- https://www.wormly.com/test-http-request/url/
-
 
 # Docker script
 For an easy start of the containers, there is a script with which you can start and stop all of them or only chosen stacks. A stack is a combination of multiple containers which are all in one folder/docker-compose.yml file.\
