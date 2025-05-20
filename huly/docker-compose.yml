@@ -139,6 +139,25 @@ services:
     networks:
       - huly_net
 
+  love:
+    image: hardcoreeng/love:${HULY_VERSION}
+    container_name: love
+    expose:
+      - 8096
+    env_file:
+      - ./.env
+    environment:
+      - STORAGE_CONFIG=minio|minio?accessKey=minioadmin&secretKey=minioadmin
+      - SECRET=${SECRET}
+      - ACCOUNTS_URL=http://account:3000
+      - DB_URL=mongodb://mongodb:27017
+      - MONGO_URL=mongodb://mongodb:27017
+      - STORAGE_PROVIDER_NAME=minio
+      - PORT=8096
+    restart: unless-stopped
+    networks:
+      - huly_net
+
   front:
     image: hardcoreeng/front:${HULY_VERSION}
     environment:
