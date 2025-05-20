@@ -1,0 +1,187 @@
+services:
+  ###############################################
+  ####               huly                   #####
+  ###############################################
+  nginx:
+    image: "nginx:1.21.3"
+    # ports:
+    #   - "80:80"
+    volumes:
+      - ./.huly.nginx:/etc/nginx/conf.d/default.conf
+    restart: unless-stopped
+    networks:
+      - proxy
+      - huly_net
+    labels:
+      - "traefik.enable=true"                                                  #<== Enable traefik
+      - "traefik.http.routers.huly-secured.rule=Host(`huly.${DOMAIN}`)"  #<== Set domain
+      - "traefik.http.routers.huly-secured.entrypoints=websecure"           #<== Set entry point for HTTPS
+      - "traefik.http.routers.huly-secured.tls.certresolver=mytlschallenge" #<== Set certsresolvers for https
+      - "traefik.http.routers.huly-secured.middlewares=authelia"            #<== Add Authelia middlewares to protect login
+      - "traefik.http.routers.huly-secured.service=huly-service"         #<== Set service
+      - "traefik.http.services.huly-service.loadbalancer.server.port=80"    #<== Set target port on container
+
+  mongodb:
+    image: "mongo:7-jammy"
+    environment:
+      - PUID=1000
+      - PGID=1000
+    volumes:
+      - ./data/db:/data/db
+    restart: unless-stopped
+    networks:
+      - huly_net
+
+  elastic:
+    image: "elasticsearch:7.14.2"
+    command: |
+      /bin/sh -c "./bin/elasticsearch-plugin list | grep -q ingest-attachment || yes | ./bin/elasticsearch-plugin install --silent ingest-attachment;
+      /usr/local/bin/docker-entrypoint.sh eswrapper"
+    volumes:
+      - ./data/elastic:/usr/share/elasticsearch/data
+    environment:
+      - ELASTICSEARCH_PORT_NUMBER=9200
+      - BITNAMI_DEBUG=true
+      - discovery.type=single-node
+      - ES_JAVA_OPTS=-Xms1024m -Xmx1024m
+      - http.cors.enabled=true
+      - http.cors.allow-origin=http://localhost:8082
+    healthcheck:
+      interval: 20s
+      retries: 10
+      test: curl -s http://localhost:9200/_cluster/health | grep -vq '"status":"red"'
+    restart: unless-stopped
+    networks:
+      - huly_net
+
+  rekoni:
+    image: hardcoreeng/rekoni-service:${HULY_VERSION}
+    environment:
+      - SECRET=${SECRET}
+    deploy:
+      resources:
+        limits:
+          memory: 500M
+    restart: unless-stopped
+    networks:
+      - huly_net
+
+  transactor:
+    image: hardcoreeng/transactor:${HULY_VERSION}
+    environment:
+      - SERVER_PORT=3333
+      - SERVER_SECRET=${SECRET}
+      - SERVER_CURSOR_MAXTIMEMS=30000
+      - DB_URL=mongodb://mongodb:27017
+      - MONGO_URL=mongodb://mongodb:27017
+      - STORAGE_CONFIG=minio|minio?accessKey=minioadmin&secretKey=minioadmin
+      - FRONT_URL=http://localhost:8087
+      - ACCOUNTS_URL=http://account:3000
+      - FULLTEXT_URL=http://fulltext:4700
+      - STATS_URL=http://stats:4900
+      - LAST_NAME_FIRST=${LAST_NAME_FIRST:-true}
+    restart: unless-stopped
+    networks:
+      - huly_net
+
+  collaborator:
+    image: hardcoreeng/collaborator:${HULY_VERSION}
+    environment:
+      - COLLABORATOR_PORT=3078
+      - SECRET=${SECRET}
+      - ACCOUNTS_URL=http://account:3000
+      - DB_URL=mongodb://mongodb:27017
+      - STATS_URL=http://stats:4900
+      - STORAGE_CONFIG=minio|minio?accessKey=minioadmin&secretKey=minioadmin
+    restart: unless-stopped
+    networks:
+      - huly_net
+
+  account:
+    image: hardcoreeng/account:${HULY_VERSION}
+    environment:
+      - SERVER_PORT=3000
+      - SERVER_SECRET=${SECRET}
+      - DB_URL=mongodb://mongodb:27017
+      - MONGO_URL=mongodb://mongodb:27017
+      - TRANSACTOR_URL=ws://transactor:3333;ws${SECURE:+s}://huly.${DOMAIN}/_transactor
+      - STORAGE_CONFIG=minio|minio?accessKey=minioadmin&secretKey=minioadmin
+      - FRONT_URL=http://front:8080
+      - STATS_URL=http://stats:4900
+      - MODEL_ENABLED=*
+      - ACCOUNTS_URL=http://localhost:3000
+      - ACCOUNT_PORT=3000
+    restart: unless-stopped
+    networks:
+      - huly_net
+
+  workspace:
+    image: hardcoreeng/workspace:${HULY_VERSION}
+    environment:
+      - SERVER_SECRET=${SECRET}
+      - DB_URL=mongodb://mongodb:27017
+      - MONGO_URL=mongodb://mongodb:27017
+      - TRANSACTOR_URL=ws://transactor:3333;ws${SECURE:+s}://huly.${DOMAIN}/_transactor
+      - STORAGE_CONFIG=minio|minio?accessKey=minioadmin&secretKey=minioadmin
+      - MODEL_ENABLED=*
+      - ACCOUNTS_URL=http://account:3000
+      - STATS_URL=http://stats:4900
+    restart: unless-stopped
+    networks:
+      - huly_net
+
+  front:
+    image: hardcoreeng/front:${HULY_VERSION}
+    environment:
+      - SERVER_PORT=8080
+      - SERVER_SECRET=${SECRET}
+      - LOVE_ENDPOINT=http${SECURE:+s}://huly.${DOMAIN}/_love
+      - ACCOUNTS_URL=http${SECURE:+s}://huly.${DOMAIN}/_accounts
+      - REKONI_URL=http${SECURE:+s}://huly.${DOMAIN}/_rekoni
+      - CALENDAR_URL=http${SECURE:+s}://huly.${DOMAIN}/_calendar
+      - GMAIL_URL=http${SECURE:+s}://huly.${DOMAIN}/_gmail
+      - TELEGRAM_URL=http${SECURE:+s}://huly.${DOMAIN}/_telegram
+      - STATS_URL=http${SECURE:+s}://huly.${DOMAIN}/_stats
+      - UPLOAD_URL=/files
+      - ELASTIC_URL=http://elastic:9200
+      - COLLABORATOR_URL=ws${SECURE:+s}://huly.${DOMAIN}/_collaborator
+      - STORAGE_CONFIG=minio|minio?accessKey=minioadmin&secretKey=minioadmin
+      - DB_URL=mongodb://mongodb:27017
+      - MONGO_URL=mongodb://mongodb:27017
+      - TITLE=${TITLE:-Huly Self Host}
+      - DEFAULT_LANGUAGE=${DEFAULT_LANGUAGE:-en}
+      - LAST_NAME_FIRST=${LAST_NAME_FIRST:-true}
+      - DESKTOP_UPDATES_CHANNEL=selfhost
+    restart: unless-stopped
+    networks:
+      - huly_net
+
+  fulltext:
+    image: hardcoreeng/fulltext:${HULY_VERSION}
+    environment:
+      - SERVER_SECRET=${SECRET}
+      - DB_URL=mongodb://mongodb:27017
+      - FULLTEXT_DB_URL=http://elastic:9200
+      - ELASTIC_INDEX_NAME=huly_storage_index
+      - STORAGE_CONFIG=minio|minio?accessKey=minioadmin&secretKey=minioadmin
+      - REKONI_URL=http://rekoni:4004
+      - ACCOUNTS_URL=http://account:3000
+      - STATS_URL=http://stats:4900
+    restart: unless-stopped
+    networks:
+      - huly_net
+
+  stats:
+    image: hardcoreeng/stats:${HULY_VERSION}
+    environment:
+      - PORT=4900
+      - SERVER_SECRET=${SECRET}
+    restart: unless-stopped
+    networks:
+      - huly_net
+
+networks:
+  proxy:
+    external: true
+  huly_net:
+    name: huly_net
