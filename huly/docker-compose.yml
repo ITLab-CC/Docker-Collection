@@ -32,6 +32,15 @@ services:
     networks:
       - huly_net
 
+  minio:
+    image: "minio/minio"
+    command: server /data --address ":9000" --console-address ":9001"
+    volumes:
+      - ./data/files:/data
+    restart: unless-stopped
+    networks:
+      - huly_net
+
   elastic:
     image: "elasticsearch:7.14.2"
     command: |
