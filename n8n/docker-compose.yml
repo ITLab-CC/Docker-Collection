@@ -8,6 +8,13 @@ services:
     restart: unless-stopped
     volumes:
       - ./data:/home/node/.n8n
+    environment:
+      - N8N_HOST=n8n.${DOMAIN}
+      - N8N_PORT=5678
+      - N8N_PROTOCOL=https
+      - NODE_ENV=production
+      - WEBHOOK_URL=https://n8n.${DOMAIN}/
+      - GENERIC_TIMEZONE=${TimeZone}
     networks:
       - proxy
     labels:
