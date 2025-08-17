@@ -1,0 +1,33 @@
+services:
+  ###############################################
+  ####           STIRLING-PDF                 ####
+  ###############################################
+  stirling-pdf:
+    image: docker.stirlingpdf.com/stirlingtools/stirling-pdf:latest
+    container_name: stirling-pdf
+    restart: unless-stopped
+    networks:
+      - proxy
+    # ports:
+    #   - "8080:8080"
+    volumes:
+      - ./data/stirling-pdf/trainingData:/usr/share/tessdata        # Required for extra OCR languages
+      - ./data/stirling-pdf/extraConfigs:/configs
+      - ./data/stirling-pdf/customFiles:/customFiles/
+      - ./data/stirling-pdf/logs:/logs/
+      - ./data/stirling-pdf/pipeline:/pipeline/
+    environment:
+      - DISABLE_ADDITIONAL_FEATURES=false
+      - LANGS=en_GB
+    labels:
+      - "traefik.enable=true"                                                         #<== Enable traefik
+      - "traefik.http.routers.stirling-pdf-secured.rule=Host(`pdf.${DOMAIN}`)"        #<== Set domain
+      - "traefik.http.routers.stirling-pdf-secured.entrypoints=websecure"             #<== Set entry point for HTTPS
+      - "traefik.http.routers.stirling-pdf-secured.tls.certresolver=mytlschallenge"   #<== Set certresolver for https
+      - "traefik.http.routers.stirling-pdf-secured.middlewares=authelia"              #<== Add Authelia middlewares to protect login
+      - "traefik.http.routers.stirling-pdf-secured.service=stirling-pdf-service"      #<== Set service
+      - "traefik.http.services.stirling-pdf-service.loadbalancer.server.port=8080"    #<== Set target port on container
+
+networks:
+  proxy:
+    external: true
